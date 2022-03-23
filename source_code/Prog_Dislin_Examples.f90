@@ -94,9 +94,11 @@ end block
 block
     use Mod_Dislin_plots, only : add_plot_xydata, dislin_plot
     character(len=75) :: legend_text, xlabel, ylabel
+    character(len=300) :: filename, filepath
     integer,parameter :: ncurves = 10
     integer :: i, istat, nc, ncolors, u1
     integer,dimension(3) :: rgb_set
+    logical :: fexists
     real(wp),dimension(2) :: xax_lim, yax_lim
     real(wp),dimension(:,:),allocatable :: col_palette
     real(wp),dimension(20, ncurves) :: xvals, yvals
@@ -119,8 +121,13 @@ block
     !./color_palettes/RGBColTabBlackPurpleRedYellow.dat             !256 colors
     !./color_palettes/RGBColTabViridisPurpleBlueGreenYellow.dat     !256 colors
     !./color_palettes/RGBTwentyDistinctCol.dat                      !22 colors
-    open(newunit=u1, file='./color_palettes/RGBColTabViridisPurpleBlueGreenYellow.dat', &
-        & iostat=istat, action='read', status='old')
+    filename = 'RGBColTabViridisPurpleBlueGreenYellow.dat'
+    filepath = './color_palettes/'//trim(filename)
+    inquire(file=filepath, exist=fexists)
+    if (.not. fexists) then
+        filepath = './source_code/color_palettes/'//trim(filename)    
+    endif    
+    open(newunit=u1, file=filepath, iostat=istat, action='read', status='old')
     do i = 1,ncolors
         read(u1,*,iostat=istat) col_palette(1:3,i)
         if (istat /= 0) exit
