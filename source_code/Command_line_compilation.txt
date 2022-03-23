@@ -4,8 +4,8 @@
 ## 3.) execute the below command line (it may take a while to complete)
 ## version including dislin library for plots:
 
-ifort /o Prog_xy.exe /O3  Mod_NumPrec.f90 Mod_Dislin_plots.f90 Prog_Dislin_Example1.f90  /I"c:\dislin\ifc\real64" c:\dislin\disifl_d.lib c:\dislin\disifd_d.lib user32.lib gdi32.lib
+ifort /o Prog_xy.exe /O3  Mod_NumPrec.f90 Mod_Dislin_plots.f90 Prog_Dislin_Examples.f90  /I"c:\dislin\ifc\real64" c:\dislin\disifl_d.lib c:\dislin\disifd_d.lib user32.lib gdi32.lib
 
 or with Intel's ifx LLVM compiler:
 
-ifx /o Prog_xy.exe /O3  Mod_NumPrec.f90 Mod_Dislin_plots.f90 Prog_Dislin_Example1.f90  /I"c:\dislin\ifc\real64" c:\dislin\disifl_d.lib c:\dislin\disifd_d.lib user32.lib gdi32.lib
+ifx /o Prog_xy.exe /O3  Mod_NumPrec.f90 Mod_Dislin_plots.f90 Prog_Dislin_Examples.f90  /I"c:\dislin\ifc\real64" c:\dislin\disifl_d.lib c:\dislin\disifd_d.lib user32.lib gdi32.lib
