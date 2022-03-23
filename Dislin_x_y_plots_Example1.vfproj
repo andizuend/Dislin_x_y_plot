@@ -48,5 +48,5 @@
 		<Filter Name="Source Files" Filter="f90;for;f;fpp;ftn;def;odl;idl">
 		<File RelativePath=".\source_code\Mod_Dislin_plots.f90"/>
 		<File RelativePath=".\source_code\Mod_NumPrec.f90"/>
-		<File RelativePath=".\source_code\Prog_Dislin_Example1.f90"/></Filter></Files>
+		<File RelativePath=".\source_code\Prog_Dislin_Examples.f90"/></Filter></Files>
 	<Globals/></VisualStudioProject>

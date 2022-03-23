@@ -90,7 +90,7 @@ public :: add_plot_xydata, dislin_plot
     character(len=*),optional,intent(in) :: plot_symb           !plot curves w/ or w/o symbols or symbols only 
                                                                 !(options: 'symbols', 'curve', 'both')
     integer,optional,intent(in) :: symb_id                      !the symbol ID for dislin (15 = open circle, 5 = open diamond, 
-                                                                !3 = +, 4 = X, 16 = filled square, etc.)
+                                                                !3 = +, 4 = X, 16 = filled square, 21 = filled circle, etc.)
     
     !local variables:
     integer :: k, ndset, np, np_old, istat
@@ -114,7 +114,7 @@ public :: add_plot_xydata, dislin_plot
         np = k
     endif
     
-    allocate( temp_data , stat=istat)
+    allocate( temp_data, stat=istat)
     allocate( temp_data%npoints(ndset), temp_data%xval(np,ndset), temp_data%yval(np,ndset),  &
         & temp_data%legtext(ndset), temp_data%pen_width(ndset), temp_data%rgb_color(3,ndset), &
         & temp_data%line_style(ndset), temp_data%plot_symb(ndset), temp_data%symbol_id(ndset), stat=istat )
