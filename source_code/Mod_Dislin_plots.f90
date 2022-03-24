@@ -132,7 +132,7 @@ public :: add_plot_xydata, dislin_plot
         temp_data%symbol_id(1:ndset-1)     = xy_data%symbol_id(1:ndset-1) 
     endif
     !move the data into enlarged xy_data using memory-friendly move_alloc:
-    call move_alloc(temp_data, xy_data, stat=istat)     !temp_data will be deallocated
+    call move_alloc(temp_data, xy_data)     !temp_data will be deallocated
     
     !finally add the new data set to xy_data, including accouting for optional arguments:
     xy_data%npoints(ndset) = k
