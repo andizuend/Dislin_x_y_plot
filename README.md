@@ -2,11 +2,10 @@
 A simplified and adjustable Fortran module to quickly create nice 2-D Dislin plots from within a Fortran program.
 
 ### Required libraries
-This module requires an installed and linked DISLIN graphics library         (https://www.dislin.de/index.html) for your (Fortran) compiler and operating system of choice. See that website for details about Dislin and installation instructions for different platforms.
+This module requires an installed and linked DISLIN graphics library (https://www.dislin.de/index.html) for your (Fortran) compiler and operating system of choice. See that website for details about Dislin and installation instructions for different platforms.
 
 ## Purpose
-The purpose of the Fortran module `Mod_Dislin_plots` is to allow a user to generate plots from within a Fortran program nearly as easily as with the provided Dislin "quickplots".
-However, unlike the quickplots, this module offers a lot more options for controlling the plot page, axis system and various curve properties. It also makes adding multiple x--y data sets (curves) to a single plot a piece of cake.
+The purpose of the Fortran module `Mod_Dislin_plots` is to allow a user to generate plots from within a Fortran program nearly as easily as with the provided Dislin "quickplots". However, unlike the "quickplots", this module offers a lot more options for controlling the plot page, axis system and various curve properties while only needing two calls two subroutines (rather than coding the whole plot with plain Dislin). It also makes adding multiple x--y data sets (curves) to a single plot a piece of cake. Importantly, the purpose of this module is not to repackage the whole suite of options Dislin provides -- just a selection of options and settings that are often used in relatively simple 2-D plots. It may also serve as a template for your own, customized interface to and use of Dislin.
 
 ## Examples
 Two examples for the use of the `Mod_Dislin_plots` module are included in the main program `Prog_Dislin_Examples`. See also the specific comments in that file.
