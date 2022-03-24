@@ -27,5 +27,9 @@ A number of data set (curve) properties can be controlled via optional arguments
  - line style; options: 'solid', 'dotted', 'dashed', 'dashed_medium'
  - plot curves w/ or w/o symbols or symbols only (options: 'symbols', 'curve', 'both')
  - the symbol ID for dislin (15 = open circle, 5 = open diamond, 3 = +, 4 = X, 16 = filled square, 21 = filled circle, etc.)
- - other features from the Dislin graphics library could be added based on your needs.
-
+ 
+ Other features from the Dislin graphics library could be added based on your needs.
+ 
+## Editing made plots
+My preferred way of editing made plots (when saved as .pdf) outside of the Fortran program is by using a vector graphics editing software like Inkscape (https://inkscape.org). For example, this will allow you to extract the plot in vector graphics format, rearranging several plots into a figure, changing fonts, adding text, and many other things. 
+Import the pdf into incscape > mark the plot page > ungroup > delete unwanted things such as the page background; re-group and/or rearrange the plot into a multipanel figure, etc. For changing fonts, such as from Helvetica to Arial, use Extensions > Text > Replace font.
