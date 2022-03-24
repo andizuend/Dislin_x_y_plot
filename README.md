@@ -10,6 +10,7 @@ However, unlike the quickplots, this module offers a lot more options for contro
 
 ## Examples
 Two examples for the use of the `Mod_Dislin_plots` module are included in the main program `Prog_Dislin_Examples`. See also the specific comments in that file.
+For convenience, the repository includes a MS Visual Studio project and solution (.sln) file for use with Intel's Fortran compiler (via Intel oneAPI) on a Windows operating system ([Intel oneAPI Toolkit](https://www.intel.com/content/www/us/en/developer/tools/oneapi/fortran-compiler.html), see also [this how-to install oneAPI for Fortran use](https://community.intel.com/t5/Intel-Fortran-Compiler/The-Easy-and-Fast-Way-to-Install-JUST-Fortran-with-Intel-oneAPI/td-p/1360571), and Visual Studio need to be installed on your system).
 
 ## Structure & options
 The module `Mod_Dislin_plots` contains two subroutines:
