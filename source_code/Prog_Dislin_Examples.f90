@@ -25,7 +25,7 @@ real(kind=wp) :: inc
 real(wp),dimension(500) :: xdat, ydat1, ydat2
 !...................................
 
-!load/modify data (here just to generate an example plots):
+!load/modify data (here just to generate an example):
 npoints = size(xdat)
 inc = 1.0_wp/real(npoints -1, kind=wp)
 xdat = [(inc*i, i = 0,npoints -1)]          !use of implied loop for array values
@@ -35,6 +35,7 @@ ydat2 = 1.0_wp + xdat*(1.0_wp - xdat)**4
 !----------------------------------------------------------------------------------------
 !!** EXAMPLE 0: use of the quickplots feature already offered by Dislin **
 !
+!uncomment the following code block to run this example.
 !block
 !    integer,parameter :: dp = kind(1.0D0)
 !    real(dp),dimension(:),allocatable :: xval, yval
@@ -71,6 +72,8 @@ block
     !....................................
 
     !add data for the two x--y curves:
+    !note that only xv=..., yv=..., and ltext=... need to be present; other attributes are 
+    !optional and, if absent, a default value will be used.
     call add_plot_xydata(xv=xdat, yv=ydat1(:), ltext='ydat1 curve data', pen_wid=8.0_wp, &
         & rgb_col=rgb_blue, lstyle='solid', plot_symb='curve', symb_id=15)
 
@@ -82,7 +85,7 @@ block
     ylabel = '$y_{\rm dat}$'
     
     call dislin_plot(xlabel, ylabel, yaxis_mod=0.6_wp, legend_position=7, metafile='pdf', &
-        & out_file_name='example1_plot')    
+        & out_file_name='dislin_x_y_plot_example1')    
 end block
 !----------------------------------------------------------------------------------------
 
@@ -104,7 +107,7 @@ block
     real(wp),dimension(20, ncurves) :: xvals, yvals
     !....................................
     
-    !generate some scaled random data point for this example:
+    !generate some scaled random data points for this example:
     do nc = 1,ncurves
         call random_number(xvals(:,nc))
         call random_number(yvals(:,nc))
@@ -114,10 +117,10 @@ block
         yvals(2:,nc) = yvals(1,nc) +yvals(2:,nc)
     enddo
     
-    !load RGB color table for use with the following plot:
+    !load an RGB color table for use with the following plot:
     ncolors = 256
     allocate( col_palette(3,ncolors) )
-    !currently included options for color palettes:
+    !currently included options for color palettes (this can be customized easily):
     !./color_palettes/RGBColTabBlackPurpleRedYellow.dat             !256 colors
     !./color_palettes/RGBColTabViridisPurpleBlueGreenYellow.dat     !256 colors
     !./color_palettes/RGBTwentyDistinctCol.dat                      !22 colors
@@ -145,7 +148,7 @@ block
         call add_plot_xydata(xv=xvals(:,nc), yv=yvals(:,nc), ltext=legend_text, pen_wid=3.0_wp, &
             & rgb_col=rgb_set, lstyle='solid', plot_symb='symbols', symb_id=21)
     enddo
-    !add another "baseline" curve for fun:
+    !add another curve (here the 1:1 line):
     call add_plot_xydata(xv=[0.0_wp, 10.0_wp], yv=[0.0_wp, 10.0_wp], ltext='$1:1$ line', &
         & pen_wid=6.0_wp, lstyle='dotted', plot_symb='curve')   !will use default color
 
@@ -156,7 +159,7 @@ block
     xax_lim = [0.0_wp, 5.0_wp]
     yax_lim = [0.0_wp, 5.0_wp]
     call dislin_plot(xlabel, ylabel, yaxis_mod=1.0_wp, xaxis_limits=xax_lim, yaxis_limits=yax_lim, &
-        & legend_position=3, metafile='pdf', out_file_name='example2_plot')
+        & legend_position=3, metafile='pdf', out_file_name='dislin_x_y_plot_example2')
             
 end block
 !----------------------------------------------------------------------------------------

@@ -17,7 +17,7 @@
 !*   terms of the GNU General Public License as published by the Free Software          *
 !*   Foundation, either version 3 of the License, or (at your option) any later         *
 !*   version.                                                                           *
-!*   The AIOMFAC model code is distributed in the hope that it will be useful, but      *
+!*   The module code is distributed in the hope that it will be useful, but             *
 !*   WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or      *
 !*   FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more      *
 !*   details.                                                                           *
@@ -134,7 +134,7 @@ public :: add_plot_xydata, dislin_plot
     !move the data into enlarged xy_data using memory-friendly move_alloc:
     call move_alloc(temp_data, xy_data)     !temp_data will be deallocated
     
-    !finally add the new data set to xy_data, including accouting for optional arguments:
+    !finally add the new data set to xy_data, including accounting for optional arguments:
     xy_data%npoints(ndset) = k
     xy_data%xval(1:k,ndset) = xv
     xy_data%yval(1:k,ndset) = yv
