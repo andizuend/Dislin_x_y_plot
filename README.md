@@ -1,11 +1,11 @@
 # Dislin_x_y_plot
-A simplified and adjustable Fortran module to quickly create nice 2-D Dislin plots from within a Fortran program.
+A simplified and adjustable Fortran module to quickly create nice 2D Dislin plots from within a Fortran program.
 
 ### Required libraries
 This module requires an installed and linked DISLIN graphics library (https://www.dislin.de/index.html) for your (Fortran) compiler and operating system of choice. See that website for details about Dislin and installation instructions for different platforms.
 
 ## Purpose
-The purpose of the Fortran module `Mod_Dislin_plots` is to allow a user to generate plots from within a Fortran program nearly as easily as with the provided Dislin "quickplots". However, unlike the "quickplots", this module offers a lot more options for controlling the plot page, axis system and various curve properties while only needing two subroutine calls to set the plot properties -- rather than coding the whole plot with plain Dislin. It also makes adding multiple x--y data sets (curves) to a single plot a piece of cake. Importantly, the purpose of this module is not to repackage the whole suite of options Dislin provides -- just a selection of options and settings that are often used in relatively simple 2-D plots. It may also serve as a template for your own, customized interface to and use of Dislin.
+The purpose of the Fortran module `Mod_Dislin_plots` is to allow a user to generate plots from within a Fortran program nearly as easily as with the provided Dislin "quickplots". However, unlike the "quickplots", this module offers a lot more options for controlling the plot page, axis system and various curve properties while only needing two subroutine calls to set the plot properties&mdash;rather than coding the whole plot with plain Dislin. It also makes adding multiple x&ndash;y data sets (curves) to a single plot a piece of cake. Importantly, the purpose of this module is *not* to repackage the whole suite of options Dislin provides&mdash;just a selection of options and settings that are often used in relatively simple 2D plots. It may also serve as a template for your own, customized interface to and use of Dislin.
 
 ## Examples
 Two examples for the use of the `Mod_Dislin_plots` module are included in the main program `Prog_Dislin_Examples`. See also the specific comments in that file.
@@ -14,7 +14,7 @@ For convenience, the repository includes a MS Visual Studio project and solution
 ## Structure & options
 The module `Mod_Dislin_plots` contains two subroutines:
 
-- subroutine  `add_plot_xydata` allows adding and specifying the x--y data for a curve, with several optional data set characteristics listed below. For adding more than one curve to an existing plot, you simply call this subroutine multiple times (once for each curve).
+- subroutine  `add_plot_xydata` allows adding and specifying the x&ndash;y data for a curve, with several optional data set characteristics listed below. For adding more than one curve to an existing plot, you simply call this subroutine multiple times (once for each curve).
 - subroutine `dislin_plot` is used to generate the plot containing one or more curves. 
 - The subroutine call of `dislin_plot` allows for setting arguments for the axis labels, the aspect ratio of the plot, the legend position, and the axis ranges. See the interface details within `Mod_Dislin_plots`.
 
@@ -32,4 +32,4 @@ A number of data set (curve) properties can be controlled via optional arguments
  
 ## Editing generated vector graphics
 My preferred way of editing made plots (when saved as .pdf) outside of the Fortran program is by using a vector graphics editing software like Inkscape (https://inkscape.org). For example, this will allow you to: extract the plot in vector graphics format, rearrange several plots into a multipanel figure, change fonts, add other text, and many other things. 
-To get started: import the pdf file into incscape > mark the plot page > ungroup > delete unwanted things such as the page background; re-group and/or rearrange the plot into a multipanel figure, etc. For changing fonts, such as from Helvetica to Arial, use Extensions > Text > Replace font.
+To get started: import the pdf file into inkscape > mark the plot page > ungroup > delete unwanted things such as the page background; re-group and/or rearrange the plot into a multipanel figure, etc. For changing fonts, such as from Helvetica to Arial or Symbol to Times New Roman, use Extensions > Text > Replace font.
