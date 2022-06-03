@@ -101,7 +101,7 @@ public :: add_plot_xydata, dislin_plot
     k = size(xv)
     
     !check whether a xy_data variable has been allocated already: 
-    if ( allocated(xy_data) ) then  !xy_data%xval
+    if ( allocated(xy_data) ) then
         is_allocated = .true.
         ndset = size(xy_data%xval, dim=2)
         np_old = size(xy_data%xval, dim=1)
@@ -185,7 +185,7 @@ public :: add_plot_xydata, dislin_plot
     !*   Dept. Atmospheric and Oceanic Sciences, McGill University                          *
     !*                                                                                      *
     !*   -> created:        2021-06-29                                                      *
-    !*   -> latest changes: 2022-03-23                                                      *
+    !*   -> latest changes: 2022-06-03                                                      *
     !*                                                                                      *
     !****************************************************************************************
     subroutine dislin_plot(xlabel, ylabel, yaxis_mod, xaxis_limits, yaxis_limits, &
@@ -255,7 +255,7 @@ public :: add_plot_xydata, dislin_plot
     call name(trim(xlabel), 'X')                !set x-axis label text
     call name(trim(ylabel), 'Y')
     
-    !set automatic scaling for x-axis and y-axis based on slighly scaled input ranges:
+    !set automatic scaling for x-axis and y-axis based on slightly scaled input ranges:
     axis_min = minval( [( minval(xy_data%xval(1:xy_data%npoints(i), i)), i=1,ndsets )] ) 
     axis_max = maxval( [( maxval(xy_data%xval(1:xy_data%npoints(i), i)), i=1,ndsets )] ) 
     if (present(xaxis_limits)) then
@@ -313,8 +313,9 @@ public :: add_plot_xydata, dislin_plot
         case('dashed_medium')
             call lncap('cut')
             call dashm()                              
-        case default
-            call incmrk(0)              
+        case default                !solid line style
+            call lncap('long')
+            call solid()            
         end select
         call penwid(real(xy_data%pen_width(i), kind=dp))    !set pen / curve width (especially for pdf output) 
         call setrgb(xy_data%rgb_color(1,i)/255.0_dp, xy_data%rgb_color(2,i)/255.0_dp, &

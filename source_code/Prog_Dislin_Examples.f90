@@ -52,6 +52,7 @@ ydat2 = 1.0_wp + xdat*(1.0_wp - xdat)**4
 !    call qplot(xval, yval, npoints)
 !end block
 
+
 !----------------------------------------------------------------------------------------
 !** EXAMPLE 1: plot of two curves with a few set attributes **
 !
@@ -83,7 +84,6 @@ block
     !set overall plot properties and generate Dislin plot:
     xlabel = 'mole fraction of component 1, $x_1$'
     ylabel = '$y_{\rm dat}$'
-    
     call dislin_plot(xlabel, ylabel, yaxis_mod=0.6_wp, legend_position=7, metafile='pdf', &
         & out_file_name='dislin_x_y_plot_example1')    
 end block
