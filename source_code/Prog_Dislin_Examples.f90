@@ -2,7 +2,7 @@
 !****************************************************************************************
 !*   :: Purpose ::                                                                      *
 !*  A main program showing two examples for how to use Mod_Dislin_plots to generate 2-D *
-!*  scatter plots (or curve plots) using the DISLIN graphics library.                   *  
+!*  scatter plots (or curve plots) using the DISLIN graphics library.                   *
 !*  This program requires an installed and linked DISLIN library.                       *
 !*  See installation instructions at https://www.dislin.de/index.html.                  *
 !*                                                                                      *

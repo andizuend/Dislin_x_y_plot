@@ -185,7 +185,7 @@ public :: add_plot_xydata, dislin_plot
     !*   Dept. Atmospheric and Oceanic Sciences, McGill University                          *
     !*                                                                                      *
     !*   -> created:        2021-06-29                                                      *
-    !*   -> latest changes: 2022-06-03                                                      *
+    !*   -> latest changes: 2022-07-22                                                      *
     !*                                                                                      *
     !****************************************************************************************
     subroutine dislin_plot(xlabel, ylabel, yaxis_mod, xaxis_limits, yaxis_limits, &
@@ -215,13 +215,15 @@ public :: add_plot_xydata, dislin_plot
     !local variables:
     character(len=:),allocatable :: cbuff
     integer,parameter :: dp = kind(1.0D0)               !use this real kind with the double precision version of Dislin.
-    integer :: i, istat, ndsets, npts, nxl, nyl, nzl
-    real(dp) :: axis_min, axis_max, axis_range, xa, xe, xor, xstep, ya, ye, yor, ystep
+    integer :: i, istat, ndig, ndsets, npts, nxl, nyl, nzl
+    real(dp) :: xaxis_min, xaxis_max, yaxis_min, yaxis_max, axis_range, temp, &
+        & xa, xe, xor, xstep, ya, ye, yor, ystep
+    logical :: invert_xaxis, invert_yaxis
     ! the external Dislin procedures (available via linked static library):
     external :: metafl, scrmod, disini, pagfll, setclr, psfont, chaspc, height, hwfont, &
         & texmod, name, setscl, graf, incmrk, legini, leglin, legend, lncap, dot, dash, &
         & dashm, solid, penwid, color, curve, setrgb, endgrf, disfin, setfil, filmod, &
-        & legtit, frame, linesp, getlen, axslen, psmode, marker, nochek   
+        & legtit, frame, linesp, getlen, axslen, psmode, marker, nochek, gaxpar   
     !...............................................
     
     !The object xy_data contains stored data for a curve or for several curves, 
@@ -255,31 +257,60 @@ public :: add_plot_xydata, dislin_plot
     call name(trim(xlabel), 'X')                !set x-axis label text
     call name(trim(ylabel), 'Y')
     
-    !set automatic scaling for x-axis and y-axis based on slightly scaled input ranges:
-    axis_min = minval( [( minval(xy_data%xval(1:xy_data%npoints(i), i)), i=1,ndsets )] ) 
-    axis_max = maxval( [( maxval(xy_data%xval(1:xy_data%npoints(i), i)), i=1,ndsets )] ) 
+    invert_xaxis = .false.
     if (present(xaxis_limits)) then
-        axis_min = xaxis_limits(1)  
-        axis_max = xaxis_limits(2)   
+        xaxis_min = xaxis_limits(1)  
+        xaxis_max = xaxis_limits(2) 
+        if (xaxis_min > xaxis_max) then
+            invert_xaxis = .true.
+        endif
+    else
+        !set automatic scaling for x-axis and y-axis based on slightly scaled input ranges:
+        xaxis_min = minval( [( minval(xy_data%xval(1:xy_data%npoints(i), i)), i=1,ndsets )] ) 
+        xaxis_max = maxval( [( maxval(xy_data%xval(1:xy_data%npoints(i), i)), i=1,ndsets )] ) 
     endif
-    axis_range = axis_max - axis_min
-    axis_min = axis_min -0.008_dp*axis_range
-    axis_max = axis_max +0.008_dp*axis_range
-    call setscl([axis_min, axis_max], 2, 'X')
+    axis_range = abs(xaxis_max - xaxis_min)
+    if (invert_xaxis) then
+        temp = xaxis_min
+        xaxis_min = xaxis_max
+        xaxis_max = temp
+    endif
+    xaxis_min = xaxis_min -0.008_dp*axis_range
+    xaxis_max = xaxis_max +0.008_dp*axis_range
     
-    axis_min = minval( [( minval( xy_data%yval(1:xy_data%npoints(i), i)), i=1,ndsets )] ) 
-    axis_max = maxval( [( maxval( xy_data%yval(1:xy_data%npoints(i), i)), i=1,ndsets )] )     
+    invert_yaxis = .false.    
     if (present(yaxis_limits)) then
-        axis_min = yaxis_limits(1)  
-        axis_max = yaxis_limits(2)   
+        yaxis_min = yaxis_limits(1)  
+        yaxis_max = yaxis_limits(2) 
+        if (yaxis_min > yaxis_max) then
+            invert_yaxis = .true.
+        endif  
+    else
+        yaxis_min = minval( [( minval( xy_data%yval(1:xy_data%npoints(i), i)), i=1,ndsets )] ) 
+        yaxis_max = maxval( [( maxval( xy_data%yval(1:xy_data%npoints(i), i)), i=1,ndsets )] ) 
     endif
-    axis_range = axis_max - axis_min
-    axis_min = axis_min -(0.015_dp/yaxis_mod)*axis_range
-    axis_max = axis_max +(0.015_dp/yaxis_mod)*axis_range
-    call setscl([axis_min, axis_max], 2, 'Y')   !set automatic scaling for y-axis based on targeted range
+    axis_range = abs(yaxis_max - yaxis_min)
+    if (invert_yaxis) then
+        temp = yaxis_min
+        yaxis_min = yaxis_max   
+        yaxis_max = temp
+    endif
+    yaxis_min = yaxis_min -(0.015_dp/yaxis_mod)*axis_range
+    yaxis_max = yaxis_max +(0.015_dp/yaxis_mod)*axis_range
     
     !initialize graph axis system (using automatic scaling):
     call nochek()                               !suppress warning about points outside of the plotting area
+    if (invert_xaxis) then
+        call gaxpar(xaxis_max, xaxis_min, 'noextend', 'x', xa, xe, xor, xstep, ndig)
+    else
+        call gaxpar(xaxis_min, xaxis_max, 'noextend', 'x', xa, xe, xor, xstep, ndig)
+    endif
+    if (invert_yaxis) then
+        call gaxpar(yaxis_max, yaxis_min, 'noextend', 'y', ya, ye, yor, ystep, ndig)
+    else
+        call gaxpar(yaxis_min, yaxis_max, 'noextend', 'y', ya, ye, yor, ystep, ndig)
+    endif
+    !endif
     call graf(xa, xe, xor, xstep, ya, ye, yor, ystep)  
     call legini(cbuff, min(ndsets, 30), 75)     !initialize legend
     
