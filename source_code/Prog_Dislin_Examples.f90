@@ -11,7 +11,7 @@
 !*   Dept. Atmospheric and Oceanic Sciences, McGill University                          *
 !*                                                                                      *
 !*   -> created:        2021-06-29                                                      *
-!*   -> latest changes: 2022-03-23                                                      *
+!*   -> latest changes: 2023-03-15                                                      *
 !*                                                                                      *
 !****************************************************************************************
 program Prog_Dislin_Examples
@@ -123,7 +123,7 @@ block
     !currently included options for color palettes (this can be customized easily):
     !./color_palettes/RGBColTabBlackPurpleRedYellow.dat             !256 colors
     !./color_palettes/RGBColTabViridisPurpleBlueGreenYellow.dat     !256 colors
-    !./color_palettes/RGBTwentyDistinctCol.dat                      !22 colors
+    !./color_palettes/RGBTwentyDistinctCol.dat                      !ncolors = 22 (20 colors plus 2 for white and black)
     filename = 'RGBColTabViridisPurpleBlueGreenYellow.dat'
     filepath = './color_palettes/'//trim(filename)
     inquire(file=filepath, exist=fexists)
@@ -159,7 +159,10 @@ block
     xax_lim = [0.0_wp, 5.0_wp]
     yax_lim = [0.0_wp, 5.0_wp]
     call dislin_plot(xlabel, ylabel, yaxis_mod=1.0_wp, xaxis_limits=xax_lim, yaxis_limits=yax_lim, &
-        & legend_position=3, metafile='pdf', out_file_name='dislin_x_y_plot_example2')
+        & legend_position=3, metafile='cons, pdf', out_file_name='dislin_x_y_plot_example2')
+    
+    !note: setting metafile = 'xwin, pdf' or = 'cons, pdf' will produce two versions of the same plot, 
+    !      one displayed to the screen and one saved as a pdf-file.
             
 end block
 !----------------------------------------------------------------------------------------

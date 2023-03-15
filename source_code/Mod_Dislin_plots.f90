@@ -185,7 +185,7 @@ public :: add_plot_xydata, dislin_plot
     !*   Dept. Atmospheric and Oceanic Sciences, McGill University                          *
     !*                                                                                      *
     !*   -> created:        2021-06-29                                                      *
-    !*   -> latest changes: 2022-07-22                                                      *
+    !*   -> latest changes: 2023-03-15                                                      *
     !*                                                                                      *
     !****************************************************************************************
     subroutine dislin_plot(xlabel, ylabel, yaxis_mod, xaxis_limits, yaxis_limits, &
@@ -208,21 +208,23 @@ public :: add_plot_xydata, dislin_plot
                                                         != 6 is the lower right corner of the axis system.
                                                         != 7 is the upper right corner of the axis system.
                                                         != 8 is the upper left corner of the axis system.
-    character(len=*),intent(in) :: metafile             !typically set as 'xwin', 'cons' or 'pdf';
+    character(len=*),intent(in) :: metafile             !typically set as 'xwin', 'cons', 'pdf' or two plots via 
+                                                        !'cons, pdf', 'xwin, pdf' (one to screen, one to file)
     character(len=*),intent(in) :: out_file_name        !relative path/file name of output file (e.g. for a .pdf file, 
                                                         !without stating file extension);
     
     !local variables:
     character(len=:),allocatable :: cbuff
+    character(len=:),allocatable :: meta_file_kind
     integer,parameter :: dp = kind(1.0D0)               !use this real kind with the double precision version of Dislin.
-    integer :: i, istat, ndig, ndsets, npts, nxl, nyl, nzl
+    integer :: i, istat, iplot, ndig, ndsets, npts, nxl, nyl, nzl, nplots
     real(dp) :: xaxis_min, xaxis_max, yaxis_min, yaxis_max, axis_range, temp, &
         & xa, xe, xor, xstep, ya, ye, yor, ystep
     logical :: invert_xaxis, invert_yaxis
     ! the external Dislin procedures (available via linked static library):
     external :: metafl, scrmod, disini, pagfll, setclr, psfont, chaspc, height, hwfont, &
-        & texmod, name, setscl, graf, incmrk, legini, leglin, legend, lncap, dot, dash, &
-        & dashm, solid, penwid, color, curve, setrgb, endgrf, disfin, setfil, filmod, &
+        & texmod, name, setscl, graf, incmrk, labdig, legini, leglin, legend, lncap, dot, &
+        & dash, dashm, solid, penwid, color, curve, setrgb, endgrf, disfin, setfil, filmod, &
         & legtit, frame, linesp, getlen, axslen, psmode, marker, nochek, gaxpar   
     !...............................................
     
@@ -231,144 +233,162 @@ public :: add_plot_xydata, dislin_plot
     
     ndsets = size(xy_data%pen_width)            !number of data sets
     allocate(character(len=75*min(ndsets, 30)) :: cbuff)
+    
+    select case(metafile)
+    case('cons, pdf', 'xwin, pdf')
+        nplots = 2
+    case default
+        nplots = 1
+    end select
 
-    call metafl(metafile)       
-    call setfil(trim(out_file_name)//'.'//trim(metafile))
-    call filmod('delete')                       !overwrite if file already exists                
-    call scrmod('norev')
-    call disini
-    call pagfll(255)                            !set page background color to white
-    if (trim(metafile) == 'pdf') then
-        call psfont('Helvetica')                !for 'pdf' use a postscript font; e.g. 'Times-Roman' or 'Helvetica'
-        call psmode('both')                     !allow both Greek and italic modes
-    else
-        call hwfont()                           !use a hardware font; choice depends on operating system
-    endif
-    call chaspc(-0.06_dp)                       !slightly adjust character spacing
-    call texmod('on')                           !allow for TeX-style statments in figure text 
-    call color('black')                         !set text/axis/curve color by name
-    
-    !potentially modify axis system properties
-    call getlen(nxl, nyl, nzl)
-    nxl = ceiling(0.8_dp*nxl)
-    call axslen(nxl, ceiling(nxl*yaxis_mod))    !modify the aspect ratio of the axis system via y-axis scaling
-    
-    !set axis system properties
-    call name(trim(xlabel), 'X')                !set x-axis label text
-    call name(trim(ylabel), 'Y')
-    
-    invert_xaxis = .false.
-    if (present(xaxis_limits)) then
-        xaxis_min = xaxis_limits(1)  
-        xaxis_max = xaxis_limits(2) 
-        if (xaxis_min > xaxis_max) then
-            invert_xaxis = .true.
+    do iplot = 1, nplots
+        select case(iplot)
+        case(1)
+            meta_file_kind = metafile( 1:min(4, len_trim(metafile)) )
+        case(2)
+            meta_file_kind = 'pdf'
+        end select
+        call metafl(meta_file_kind)       
+        call setfil(trim(out_file_name)//'.'//trim(meta_file_kind))
+        call filmod('delete')                       !overwrite if file already exists                
+        call scrmod('norev')
+        call disini
+        call pagfll(255)                            !set page background color to white
+        if (trim(meta_file_kind) == 'pdf') then
+            call psfont('Helvetica')                !for 'pdf' use a postscript font; e.g. 'Times-Roman' or 'Helvetica'
+            call psmode('both')                     !allow both Greek and italic modes
+        else
+            call hwfont()                           !use a hardware font; choice depends on operating system
         endif
-    else
-        !set automatic scaling for x-axis and y-axis based on slightly scaled input ranges:
-        xaxis_min = minval( [( minval(xy_data%xval(1:xy_data%npoints(i), i)), i=1,ndsets )] ) 
-        xaxis_max = maxval( [( maxval(xy_data%xval(1:xy_data%npoints(i), i)), i=1,ndsets )] ) 
-    endif
-    axis_range = abs(xaxis_max - xaxis_min)
-    if (invert_xaxis) then
-        temp = xaxis_min
-        xaxis_min = xaxis_max
-        xaxis_max = temp
-    endif
-    xaxis_min = xaxis_min -0.008_dp*axis_range
-    xaxis_max = xaxis_max +0.008_dp*axis_range
+        call chaspc(-0.06_dp)                       !slightly adjust character spacing
+        call texmod('on')                           !allow for TeX-style statments in figure text 
+        call color('black')                         !set text/axis/curve color by name
     
-    invert_yaxis = .false.    
-    if (present(yaxis_limits)) then
-        yaxis_min = yaxis_limits(1)  
-        yaxis_max = yaxis_limits(2) 
-        if (yaxis_min > yaxis_max) then
-            invert_yaxis = .true.
-        endif  
-    else
-        yaxis_min = minval( [( minval( xy_data%yval(1:xy_data%npoints(i), i)), i=1,ndsets )] ) 
-        yaxis_max = maxval( [( maxval( xy_data%yval(1:xy_data%npoints(i), i)), i=1,ndsets )] ) 
-    endif
-    axis_range = abs(yaxis_max - yaxis_min)
-    if (invert_yaxis) then
-        temp = yaxis_min
-        yaxis_min = yaxis_max   
-        yaxis_max = temp
-    endif
-    yaxis_min = yaxis_min -(0.015_dp/yaxis_mod)*axis_range
-    yaxis_max = yaxis_max +(0.015_dp/yaxis_mod)*axis_range
+        !potentially modify axis system properties
+        call getlen(nxl, nyl, nzl)
+        nxl = ceiling(0.8_dp*nxl)
+        call axslen(nxl, ceiling(nxl*yaxis_mod))    !modify the aspect ratio of the axis system via y-axis scaling
     
-    !initialize graph axis system (using automatic scaling):
-    call nochek()                               !suppress warning about points outside of the plotting area
-    if (invert_xaxis) then
-        call gaxpar(xaxis_max, xaxis_min, 'noextend', 'x', xa, xe, xor, xstep, ndig)
-    else
-        call gaxpar(xaxis_min, xaxis_max, 'noextend', 'x', xa, xe, xor, xstep, ndig)
-    endif
-    if (invert_yaxis) then
-        call gaxpar(yaxis_max, yaxis_min, 'noextend', 'y', ya, ye, yor, ystep, ndig)
-    else
-        call gaxpar(yaxis_min, yaxis_max, 'noextend', 'y', ya, ye, yor, ystep, ndig)
-    endif
-    !endif
-    call graf(xa, xe, xor, xstep, ya, ye, yor, ystep)  
-    call legini(cbuff, min(ndsets, 30), 75)     !initialize legend
+        !set axis system properties
+        call name(trim(xlabel), 'X')                !set x-axis label text
+        call name(trim(ylabel), 'Y')
     
-    !plot x--y data for all curves/symbols with the curve-specific properties:
-    do i = 1,ndsets
-        npts = xy_data%npoints(i)
-        !select plotting only symbols or curves or both:
-        select case( trim(xy_data%plot_symb(i)) )
-        case('curve')
-            call incmrk(0)
-        case('symbols')
-            call incmrk(-1)    
-            call marker(xy_data%symbol_id(i)) 
-        case('both')
-            call incmrk(1)        
-            call marker(xy_data%symbol_id(i))                       
-        case default
-            call incmrk(0)              
-        end select
-        !select line style:
-        select case( trim(xy_data%line_style(i)) )
-        case('solid')
-            call lncap('long')
-            call solid()
-        case('dotted')
-            call lncap('round')     !rounded line caps
-            call dot()                             
-        case('dashed')  
-            call lncap('round')
-            call dash()                          
-        case('dashed_medium')
-            call lncap('cut')
-            call dashm()                              
-        case default                !solid line style
-            call lncap('long')
-            call solid()            
-        end select
-        call penwid(real(xy_data%pen_width(i), kind=dp))    !set pen / curve width (especially for pdf output) 
-        call setrgb(xy_data%rgb_color(1,i)/255.0_dp, xy_data%rgb_color(2,i)/255.0_dp, &
-            & xy_data%rgb_color(3,i)/255.0_dp)              !set color by RGB value
-        call leglin(cbuff, xy_data%legtext(i), i)           !call leglin(cbuff, trim(xy_data%legtext(i)), i)
-        call curve(real(xy_data%xval(1:npts,i), kind=dp), real(xy_data%yval(1:npts,i), kind=dp), npts)
-    enddo
+        invert_xaxis = .false.
+        if (present(xaxis_limits)) then
+            xaxis_min = xaxis_limits(1)  
+            xaxis_max = xaxis_limits(2) 
+            if (xaxis_min > xaxis_max) then
+                invert_xaxis = .true.
+            endif
+        else
+            !set automatic scaling for x-axis and y-axis based on slightly scaled input ranges:
+            xaxis_min = minval( [( minval(xy_data%xval(1:xy_data%npoints(i), i)), i=1,ndsets )] ) 
+            xaxis_max = maxval( [( maxval(xy_data%xval(1:xy_data%npoints(i), i)), i=1,ndsets )] ) 
+        endif
+        axis_range = abs(xaxis_max - xaxis_min)
+        if (invert_xaxis) then
+            temp = xaxis_min
+            xaxis_min = xaxis_max
+            xaxis_max = temp
+        endif
+        xaxis_min = xaxis_min -0.008_dp*axis_range
+        xaxis_max = xaxis_max +0.008_dp*axis_range
     
-    !plot legend and finalize plot:
-    if (legend_position /= 0) then
-        call height(26)                             !set font size (height) for legend
-        call color('black')
-        call penwid(1.0_dp)  
-        call legtit('')                             
-        call frame(1)                               !set legend frame thickness
-        call linesp(2.0_dp)                         !modify line spacing of legend entries
-        call legend(cbuff, legend_position)         !plot legend; e.g. 3 = position at upper right corner of page
-    endif
-    call endgrf
-    call disfin
+        invert_yaxis = .false.    
+        if (present(yaxis_limits)) then
+            yaxis_min = yaxis_limits(1)  
+            yaxis_max = yaxis_limits(2) 
+            if (yaxis_min > yaxis_max) then
+                invert_yaxis = .true.
+            endif  
+        else
+            yaxis_min = minval( [( minval( xy_data%yval(1:xy_data%npoints(i), i)), i=1,ndsets )] ) 
+            yaxis_max = maxval( [( maxval( xy_data%yval(1:xy_data%npoints(i), i)), i=1,ndsets )] ) 
+        endif
+        axis_range = abs(yaxis_max - yaxis_min)
+        if (invert_yaxis) then
+            temp = yaxis_min
+            yaxis_min = yaxis_max   
+            yaxis_max = temp
+        endif
+        yaxis_min = yaxis_min -(0.015_dp/yaxis_mod)*axis_range
+        yaxis_max = yaxis_max +(0.015_dp/yaxis_mod)*axis_range
+    
+        !initialize graph axis system (using automatic scaling):
+        ndig = -2                                   !set as -2 so dislin determines number of displayed digits automatically
+        call nochek()                               !suppress warning about points outside of the plotting area
+        if (invert_xaxis) then
+            call gaxpar(xaxis_max, xaxis_min, 'noextend', 'x', xa, xe, xor, xstep, ndig)
+        else
+            call gaxpar(xaxis_min, xaxis_max, 'noextend', 'x', xa, xe, xor, xstep, ndig)
+        endif
+        call labdig(ndig, 'x')
+        ndig = -2
+        if (invert_yaxis) then
+            call gaxpar(yaxis_max, yaxis_min, 'noextend', 'y', ya, ye, yor, ystep, ndig)
+        else
+            call gaxpar(yaxis_min, yaxis_max, 'noextend', 'y', ya, ye, yor, ystep, ndig)
+        endif
+        call labdig(ndig, 'y')
+        call graf(xa, xe, xor, xstep, ya, ye, yor, ystep)  
+        call legini(cbuff, min(ndsets, 30), 75)     !initialize legend
+    
+        !plot x--y data for all curves/symbols with the curve-specific properties:
+        do i = 1,ndsets
+            npts = xy_data%npoints(i)
+            !select plotting of only symbols, only curves, or both:
+            select case( trim(xy_data%plot_symb(i)) )
+            case('curve')
+                call incmrk(0)
+            case('symbols')
+                call incmrk(-1)    
+                call marker(xy_data%symbol_id(i)) 
+            case('both')
+                call incmrk(1)        
+                call marker(xy_data%symbol_id(i))                       
+            case default
+                call incmrk(0)              
+            end select
+            !select line style:
+            select case( trim(xy_data%line_style(i)) )
+            case('solid')
+                call lncap('long')
+                call solid()
+            case('dotted')
+                call lncap('round')     !rounded line caps
+                call dot()                             
+            case('dashed')  
+                call lncap('round')
+                call dash()                          
+            case('dashed_medium')
+                call lncap('cut')
+                call dashm()                              
+            case default                !solid line style
+                call lncap('long')
+                call solid()            
+            end select
+            call penwid(real(xy_data%pen_width(i), kind=dp))    !set pen / curve width (especially for pdf output) 
+            call setrgb(xy_data%rgb_color(1,i)/255.0_dp, xy_data%rgb_color(2,i)/255.0_dp, &
+                & xy_data%rgb_color(3,i)/255.0_dp)              !set color by RGB value
+            call leglin(cbuff, xy_data%legtext(i), i)
+            call curve(real(xy_data%xval(1:npts,i), kind=dp), real(xy_data%yval(1:npts,i), kind=dp), npts)
+        enddo
+    
+        !plot legend and finalize plot:
+        if (legend_position /= 0) then
+            call height(26)                             !set font size (height) for legend
+            call color('black')
+            call penwid(1.0_dp)  
+            call legtit('')                             
+            call frame(1)                               !set legend frame thickness
+            call linesp(2.0_dp)                         !modify line spacing of legend entries
+            call legend(cbuff, legend_position)         !plot legend; e.g. 3 = position at upper right corner of page
+        endif
+        call endgrf
+        call disfin
+    enddo !iplot
+    
     deallocate(cbuff)
-    
     !deallocate xy_data content so the next plot is not including current data:
     deallocate( xy_data, stat=istat )    
 
