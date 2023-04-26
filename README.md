@@ -9,12 +9,15 @@ The purpose of the Fortran module `Mod_Dislin_plots` is to allow a user to gener
 
 ## Examples
 Two examples for the use of the `Mod_Dislin_plots` module are included in the main program `Prog_Dislin_Examples`. See also the specific comments in that file.
-For convenience, this repository includes a MS Visual Studio project and solution (.sln) file for use with Intel's Fortran compilers (ifort or ifx via Intel oneAPI) on a Windows operating system ([Intel oneAPI Toolkit](https://www.intel.com/content/www/us/en/developer/tools/oneapi/fortran-compiler.html), see also [this how-to install oneAPI for Fortran use](https://community.intel.com/t5/Intel-Fortran-Compiler/The-Easy-and-Fast-Way-to-Install-JUST-Fortran-with-Intel-oneAPI/td-p/1360571), and Visual Studio need to be installed on your system).
+For convenience, this repository includes a MS Visual Studio project and solution (.sln) file for use with Intel's Fortran compilers (ifort or ifx via Intel oneAPI) on a Windows operating system ([Intel oneAPI Toolkit](https://www.intel.com/content/www/us/en/developer/tools/oneapi/fortran-compiler.html), see also [this how-to install oneAPI for Fortran use](https://community.intel.com/t5/Intel-Fortran-Compiler/The-Easy-and-Fast-Way-to-Install-JUST-Fortran-with-Intel-oneAPI/td-p/1360571), and Visual Studio need to be installed on your system). If you use the provided MS Visual Studio solution on Windows, the Dislin distribution expected to be installed is the one for Windows 64-bit, compiler: "Intel compilers icl, ifort 64-bit" [found here] (https://www.dislin.de/win64.html). It also expects that Dislin is installed to its default path (c:\dislin; otherwise, you will need to edit the path to your Dislin installation in Visual Studio. Here is how that would be done: navigate to menu Project > Properties > Fortran, then 
+(1) under General > Additional Include Directories, set `c:\dislin\ifc\real64` . Adjust the c:\dislin path part to point to your installation directory. 
+(2) Check that under Fortran > Libraries > Runtime Library: `Debug Multithreaded (\libs:static /threads /dbglibs)` or simply `Multithreaded` is set (depending on Debug vs Release mode); the point is to have `\libs:static` rather than `\libs:dll` selected. 
+(3) under Project > Properties > Linker > Input > Additional Dependencies, set the following: `c:\dislin\disifl_d.lib c:\dislin\disifd_d.lib user32.lib gdi32.lib`. Again, adjust the c:\dislin path part if necessary.
 
 ## Structure & options
 The module `Mod_Dislin_plots` contains two subroutines:
 
-- subroutine  `add_plot_xydata` allows adding and specifying the x&ndash;y data for a curve, with several optional data set characteristics listed below. For adding more than one curve to an existing plot, you simply call this subroutine multiple times (once for each curve).
+- subroutine `add_plot_xydata` allows adding and specifying the x&ndash;y data for a curve, with several optional data set characteristics listed below. For adding more than one curve to an existing plot, you simply call this subroutine multiple times (once for each curve).
 - subroutine `dislin_plot` is used to generate the plot containing one or more curves. 
 - The subroutine call of `dislin_plot` allows for setting arguments for the axis labels, the aspect ratio of the plot, the legend position, and the axis ranges. See the interface details within `Mod_Dislin_plots`.
 
