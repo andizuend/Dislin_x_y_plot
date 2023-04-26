@@ -9,3 +9,10 @@ ifort /o Prog_xy.exe /O3  Mod_NumPrec.f90 Mod_Dislin_plots.f90 Prog_Dislin_Examp
 or with Intel's ifx LLVM compiler:
 
 ifx /o Prog_xy.exe /O3  Mod_NumPrec.f90 Mod_Dislin_plots.f90 Prog_Dislin_Examples.f90  /I"c:\dislin\ifc\real64" c:\dislin\disifl_d.lib c:\dislin\disifd_d.lib user32.lib gdi32.lib
+
+
+## using gfortran in a Linux terminal.
+## 1.) navigate to your local source code directory
+## 2.) execute the below command line
+
+gfortran -o Prog_xy.out -O3  Mod_NumPrec.f90 Mod_Dislin_plots.f90 Prog_Dislin_Examples.f90 -ldislin_d -I/usr/local/dislin/gf/real64
