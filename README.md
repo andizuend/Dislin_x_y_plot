@@ -15,7 +15,7 @@ For convenience, this repository includes a MS Visual Studio project and solutio
 #### ... using MS Visual Studio
 If you use the provided MS Visual Studio (VS) solution on Windows, the Dislin distribution expected to be installed is the one for Windows 64-bit, for compiler: "Intel compilers icl, ifort 64-bit" [found here](https://www.dislin.de/win64.html). It also expects that Dislin is installed to its default path (c:\dislin; otherwise, you will need to edit the path to your Dislin installation in Visual Studio. Here is how that would be done as well as general information about how to link from VS to the installed dislin library: navigate in VS to menu Project > Properties > Fortran, then 
 1. under General > Additional Include Directories, set `c:\dislin\ifc\real64`. Adjust the c:\dislin path part to point to your installation directory. 
-2. check that under Fortran > Libraries > Runtime Library: `Debug Multithreaded (\libs:static /threads /dbglibs)` or simply `Multithreaded` is set (depending on Debug vs Release mode); the point is to have linking with static libaries `\libs:static` rather than with DLLs selected. 
+2. check that under Fortran > Libraries > Runtime Library: `Debug Multithreaded (\libs:static /threads /dbglibs)` or simply `Multithreaded` is set (depending on Debug vs Release mode); the point is to have linking with static libraries rather than with DLLs selected. 
 3. under Project > Properties > Linker > Input > Additional Dependencies, set the following: `c:\dislin\disifl_d.lib c:\dislin\disifd_d.lib user32.lib gdi32.lib`. Again, if necessary, adjust in all cases the c:\dislin path parts on that line.
 
 #### ... via command line
