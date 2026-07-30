@@ -36,28 +36,29 @@ use Mod_NumPrec, only : wp
 
 implicit none
 
-!public module variables and types:
-type, private :: plot_xydata                                    !the (second) array dimension denotes the data set (curve) no.
-    integer,dimension(:),allocatable        :: npoints          !stores number of data points of a data set to be plotted
-    real(wp),dimension(:,:),allocatable     :: xval             !x coordinates of x--y data
-    real(wp),dimension(:,:),allocatable     :: yval             !y coordinates of x--y data
-    character(len=75),dimension(:),allocatable :: legtext       !legend entry text for a curve
-    real(wp),dimension(:),allocatable :: pen_width              !pen width; typical values are between 1.0 and 9.0
-    integer,dimension(:,:),allocatable :: rgb_color             !first dimension is red, green, blue values 
-                                                                !(array of 3 values each in range [0, 255])
-    character(len=13),dimension(:),allocatable :: line_style    !options: 'solid', 'dotted', 'dashed', 'dashed_medium'
-    character(len=7),dimension(:),allocatable :: plot_symb      !plot curves w/ or w/o symbols or symbols only 
-                                                                !(options: 'symbols', 'curve', 'both')
-    integer,dimension(:),allocatable :: symbol_id               !ID (number) of symbol type to be plotted (see Dislin manual)
-end type plot_xydata
+!type declarations and shared module data:
+type, private :: xydata_type                                   
+    integer,allocatable :: npoints              !stores number of data points of a data set to be plotted
+    real(wp),dimension(:),allocatable :: xval   !x coordinates of x--y data
+    real(wp),dimension(:),allocatable :: yval   !y coordinates of x--y data
+    character(len=75)   :: legtext              !legend entry text for a curve
+    real(wp)            :: pen_width            !pen width; typical values are between 1.0 and 9.0
+    integer,dimension(3):: rgb_color            !red, green, blue values (array of 3 values each in range [0, 255])
+    character(len=13)   :: line_style           !options: 'solid', 'dotted', 'dashed', 'dashed_medium'
+    character(len=7)    :: plot_symb            !plot curves and/or symbols; options: 'symbols', 'curve', 'both'
+    integer             :: symbol_id            !ID (number) of symbol type to be plotted (see Dislin manual)
+end type xydata_type                                  
 
-type(plot_xydata),allocatable,private :: xy_data
+!
+type(xydata_type),dimension(:),allocatable,private :: xy_data     !the array dimension denotes the data set (curve) no.
 
 !public procedures:
 public :: add_plot_xydata, dislin_plot
+
 !-----------------------------------------------------------
 
-    contains
+contains
+    
     
     !****************************************************************************************
     !*   :: Purpose ::                                                                      *
@@ -75,7 +76,7 @@ public :: add_plot_xydata, dislin_plot
     !*   Dept. Atmospheric and Oceanic Sciences, McGill University                          *
     !*                                                                                      *
     !*   -> created:        2021-06-29                                                      *
-    !*   -> latest changes: 2022-03-23                                                      *
+    !*   -> latest changes: 2026-07-30                                                      *
     !*                                                                                      *
     !****************************************************************************************
     subroutine add_plot_xydata(xv, yv, ltext, pen_wid, rgb_col, lstyle, plot_symb, symb_id)
@@ -93,20 +94,23 @@ public :: add_plot_xydata, dislin_plot
                                                                 !3 = +, 4 = X, 16 = filled square, 21 = filled circle, etc.)
     
     !local variables:
-    integer :: k, ndset, np, np_old, istat
+    integer :: istat, k, ndset, nl, np, np_old
     logical :: is_allocated
-    type(plot_xydata),allocatable :: temp_data
+    type(xydata_type),dimension(:),allocatable :: temp_data
     !...................................
     
     k = size(xv)
     
     !check whether a xy_data variable has been allocated already: 
-    if ( allocated(xy_data) ) then
+    if (allocated(xy_data)) then
         is_allocated = .true.
-        ndset = size(xy_data%xval, dim=2)
-        np_old = size(xy_data%xval, dim=1)
+        ndset = size(xy_data, dim=1)
+        np_old = size(xy_data(1)%xval, dim=1)
         !update ndset and np (with room for data set to be added to xy_data):
-        ndset = ndset +1
+        ndset = ndset + 1
+        if (k > np_old) then
+            nl = 112
+        endif
         np = max(k, np_old)
     else
         is_allocated = .false.
@@ -114,62 +118,57 @@ public :: add_plot_xydata, dislin_plot
         np = k
     endif
     
-    allocate( temp_data, stat=istat)
-    allocate( temp_data%npoints(ndset), temp_data%xval(np,ndset), temp_data%yval(np,ndset),  &
-        & temp_data%legtext(ndset), temp_data%pen_width(ndset), temp_data%rgb_color(3,ndset), &
-        & temp_data%line_style(ndset), temp_data%plot_symb(ndset), temp_data%symbol_id(ndset), stat=istat )
+    allocate(temp_data(ndset), stat=istat)
+    allocate(temp_data(ndset)%xval(np), temp_data(ndset)%yval(np), stat=istat)
     
     if (is_allocated) then  
         !copy the data for the first ndset-1 entries to the temporary array
-        temp_data%npoints(1:ndset-1)       = xy_data%npoints(1:ndset-1)
-        temp_data%xval(1:np_old,1:ndset-1) = xy_data%xval(1:np_old,1:ndset-1)
-        temp_data%yval(1:np_old,1:ndset-1) = xy_data%yval(1:np_old,1:ndset-1)
-        temp_data%legtext(1:ndset-1)       = xy_data%legtext(1:ndset-1)
-        temp_data%pen_width(1:ndset-1)     = xy_data%pen_width(1:ndset-1)
-        temp_data%rgb_color(:,1:ndset-1)   = xy_data%rgb_color(:,1:ndset-1)
-        temp_data%line_style(1:ndset-1)    = xy_data%line_style(1:ndset-1)
-        temp_data%plot_symb(1:ndset-1)     = xy_data%plot_symb(1:ndset-1) 
-        temp_data%symbol_id(1:ndset-1)     = xy_data%symbol_id(1:ndset-1) 
+        temp_data(1:ndset-1) = xy_data(1:ndset-1)
     endif
-    !move the data into enlarged xy_data using memory-friendly move_alloc:
-    call move_alloc(temp_data, xy_data)     !temp_data will be deallocated
+    
+    !move the data into an enlarged xy_data using memory-friendly move_alloc:
+    call move_alloc(from=temp_data, to=xy_data)             !note: temp_data will be deallocated after this call
     
     !finally add the new data set to xy_data, including accounting for optional arguments:
-    xy_data%npoints(ndset) = k
-    xy_data%xval(1:k,ndset) = xv
-    xy_data%yval(1:k,ndset) = yv
-    xy_data%legtext(ndset) = ''                                 !initialize whole string
-    xy_data%legtext(ndset)(1:min(75, len_trim(ltext))) = ltext(1:min(75, len_trim(ltext)))
+    xy_data(ndset)%npoints = k
+    xy_data(ndset)%xval(1:k) = xv(1:k)
+    xy_data(ndset)%yval(1:k) = yv(1:k)
+    xy_data(ndset)%legtext = ''                                 !initialize whole string
+    nl = min(75, len_trim(ltext))                               !limit legend line entry to max. 75 characters
+    xy_data(ndset)%legtext(1:nl) = ltext(1:nl)
     if (present(pen_wid)) then
-        xy_data%pen_width(ndset) = pen_wid
+        xy_data(ndset)%pen_width = pen_wid
     else    
-        xy_data%pen_width(ndset) = 1.0_wp                       !set a default value
+        xy_data(ndset)%pen_width = 1.0_wp                       !set a default value
     endif
     if (present(rgb_col)) then
-        xy_data%rgb_color(1:3,ndset) = rgb_col(1:3)
+        xy_data(ndset)%rgb_color(1:3) = rgb_col(1:3)
     else
-        xy_data%rgb_color(1:3,ndset) = [0, 0, 0]                !default (black)
+        xy_data(ndset)%rgb_color(1:3) = [0, 0, 0]               !default (black)
     endif
     if (present(lstyle)) then
-        xy_data%line_style(ndset) = ''
-        xy_data%line_style(ndset)(1:min(75, len_trim(lstyle))) = lstyle(1:min(75, len_trim(lstyle)))
+        xy_data(ndset)%line_style = ''
+        nl = min(75, len_trim(lstyle))
+        xy_data(ndset)%line_style(1:nl) = lstyle(1:nl)
     else
-        xy_data%line_style(ndset) = 'solid'
+        xy_data(ndset)%line_style = 'solid'
     endif
     if (present(plot_symb)) then
-        xy_data%plot_symb(ndset) = ''
-        xy_data%plot_symb(ndset)(1:min(75, len_trim(plot_symb))) = plot_symb(1:min(75, len_trim(plot_symb)))
+        xy_data(ndset)%plot_symb = ''
+        nl = min(75, len_trim(plot_symb))
+        xy_data(ndset)%plot_symb(1:nl) = plot_symb(1:nl)
     else
-        xy_data%plot_symb(ndset) = 'curve'
+        xy_data(ndset)%plot_symb = 'curve'
     endif
     if (present(symb_id)) then
-        xy_data%symbol_id(ndset) = symb_id
+        xy_data(ndset)%symbol_id = symb_id
     else
-        xy_data%symbol_id(ndset) = 15
+        xy_data(ndset)%symbol_id = 15
     endif
     
     end subroutine add_plot_xydata
     !-----------------------------------------------------------
+    
     
     
     !****************************************************************************************
@@ -185,7 +184,7 @@ public :: add_plot_xydata, dislin_plot
     !*   Dept. Atmospheric and Oceanic Sciences, McGill University                          *
     !*                                                                                      *
     !*   -> created:        2021-06-29                                                      *
-    !*   -> latest changes: 2023-03-15                                                      *
+    !*   -> latest changes: 2026-07-30                                                      *
     !*                                                                                      *
     !****************************************************************************************
     subroutine dislin_plot(xlabel, ylabel, yaxis_mod, xaxis_limits, yaxis_limits, &
@@ -231,7 +230,7 @@ public :: add_plot_xydata, dislin_plot
     !The object xy_data contains stored data for a curve or for several curves, 
     !including curve color, thickness, legend text entry, etc.
     
-    ndsets = size(xy_data%pen_width)            !number of data sets
+    ndsets = size(xy_data)                                 !number of data sets
     allocate(character(len=75*min(ndsets, 30)) :: cbuff)
     
     select case(metafile)
@@ -250,27 +249,27 @@ public :: add_plot_xydata, dislin_plot
         end select
         call metafl(meta_file_kind)       
         call setfil(trim(out_file_name)//'.'//trim(meta_file_kind))
-        call filmod('delete')                       !overwrite if file already exists                
+        call filmod('delete')                               !overwrite if file already exists                
         call scrmod('norev')
         call disini
-        call pagfll(255)                            !set page background color to white
+        call pagfll(255)                                    !set page background color to white
         if (trim(meta_file_kind) == 'pdf') then
-            call psfont('Helvetica')                !for 'pdf' use a postscript font; e.g. 'Times-Roman' or 'Helvetica'
-            call psmode('both')                     !allow both Greek and italic modes
+            call psfont('Helvetica')                        !for 'pdf' use a postscript font; e.g. 'Times-Roman' or 'Helvetica'
+            call psmode('both')                             !allow both Greek and italic modes
         else
-            call hwfont()                           !use a hardware font; choice depends on operating system
+            call hwfont()                                   !use a hardware font; choice depends on operating system
         endif
-        call chaspc(-0.06_dp)                       !slightly adjust character spacing
-        call texmod('on')                           !allow for TeX-style statments in figure text 
-        call color('black')                         !set text/axis/curve color by name
-    
+        call chaspc(-0.06_dp)                               !slightly adjust character spacing
+        call texmod('on')                                   !allow for TeX-style statments in figure text 
+        call color('black')                                 !set text/axis/curve color by name
+
         !potentially modify axis system properties
         call getlen(nxl, nyl, nzl)
         nxl = ceiling(0.8_dp*nxl)
-        call axslen(nxl, ceiling(nxl*yaxis_mod))    !modify the aspect ratio of the axis system via y-axis scaling
-    
+        call axslen(nxl, ceiling(nxl*yaxis_mod))            !modify the aspect ratio of the axis system via y-axis scaling
+
         !set axis system properties
-        call name(trim(xlabel), 'X')                !set x-axis label text
+        call name(trim(xlabel), 'X')                        !set x-axis label text
         call name(trim(ylabel), 'Y')
     
         invert_xaxis = .false.
@@ -282,8 +281,8 @@ public :: add_plot_xydata, dislin_plot
             endif
         else
             !set automatic scaling for x-axis and y-axis based on slightly scaled input ranges:
-            xaxis_min = minval( [( minval(xy_data%xval(1:xy_data%npoints(i), i)), i=1,ndsets )] ) 
-            xaxis_max = maxval( [( maxval(xy_data%xval(1:xy_data%npoints(i), i)), i=1,ndsets )] ) 
+            xaxis_min = minval( [( minval(xy_data(i)%xval(1:xy_data(i)%npoints)), i=1,ndsets )] )
+            xaxis_max = maxval( [( maxval(xy_data(i)%xval(1:xy_data(i)%npoints)), i=1,ndsets )] )
         endif
         axis_range = abs(xaxis_max - xaxis_min)
         if (invert_xaxis) then
@@ -302,8 +301,8 @@ public :: add_plot_xydata, dislin_plot
                 invert_yaxis = .true.
             endif  
         else
-            yaxis_min = minval( [( minval( xy_data%yval(1:xy_data%npoints(i), i)), i=1,ndsets )] ) 
-            yaxis_max = maxval( [( maxval( xy_data%yval(1:xy_data%npoints(i), i)), i=1,ndsets )] ) 
+            yaxis_min = minval( [( minval( xy_data(i)%yval(1:xy_data(i)%npoints)), i=1,ndsets )] ) 
+            yaxis_max = maxval( [( maxval( xy_data(i)%yval(1:xy_data(i)%npoints)), i=1,ndsets )] ) 
         endif
         axis_range = abs(yaxis_max - yaxis_min)
         if (invert_yaxis) then
@@ -315,8 +314,8 @@ public :: add_plot_xydata, dislin_plot
         yaxis_max = yaxis_max +(0.015_dp/yaxis_mod)*axis_range
     
         !initialize graph axis system (using automatic scaling):
-        ndig = -2                                   !set as -2 so dislin determines number of displayed digits automatically
-        call nochek()                               !suppress warning about points outside of the plotting area
+        ndig = -2                                           !set as -2 so dislin determines number of displayed digits automatically
+        call nochek()                                       !suppress warning about points outside of the plotting area
         if (invert_xaxis) then
             call gaxpar(xaxis_max, xaxis_min, 'noextend', 'x', xa, xe, xor, xstep, ndig)
         else
@@ -331,31 +330,33 @@ public :: add_plot_xydata, dislin_plot
         endif
         call labdig(ndig, 'y')
         call graf(xa, xe, xor, xstep, ya, ye, yor, ystep)  
-        call legini(cbuff, min(ndsets, 30), 75)     !initialize legend
+        call legini(cbuff, min(ndsets, 30), 75)             !initialize legend
     
         !plot x--y data for all curves/symbols with the curve-specific properties:
         do i = 1,ndsets
-            npts = xy_data%npoints(i)
+            npts = xy_data(i)%npoints
+            
             !select plotting of only symbols, only curves, or both:
-            select case( trim(xy_data%plot_symb(i)) )
+            select case( trim(xy_data(i)%plot_symb) )
             case('curve')
                 call incmrk(0)
             case('symbols')
                 call incmrk(-1)    
-                call marker(xy_data%symbol_id(i)) 
+                call marker(xy_data(i)%symbol_id) 
             case('both')
                 call incmrk(1)        
-                call marker(xy_data%symbol_id(i))                       
+                call marker(xy_data(i)%symbol_id)                       
             case default
                 call incmrk(0)              
             end select
+            
             !select line style:
-            select case( trim(xy_data%line_style(i)) )
+            select case( trim(xy_data(i)%line_style) )
             case('solid')
                 call lncap('long')
                 call solid()
             case('dotted')
-                call lncap('round')     !rounded line caps
+                call lncap('round')                         !rounded line caps
                 call dot()                             
             case('dashed')  
                 call lncap('round')
@@ -363,26 +364,31 @@ public :: add_plot_xydata, dislin_plot
             case('dashed_medium')
                 call lncap('cut')
                 call dashm()                              
-            case default                !solid line style
+            case default                                    !solid line style
                 call lncap('long')
                 call solid()            
             end select
-            call penwid(real(xy_data%pen_width(i), kind=dp))    !set pen / curve width (especially for pdf output) 
-            call setrgb(xy_data%rgb_color(1,i)/255.0_dp, xy_data%rgb_color(2,i)/255.0_dp, &
-                & xy_data%rgb_color(3,i)/255.0_dp)              !set color by RGB value
-            call leglin(cbuff, xy_data%legtext(i), i)
-            call curve(real(xy_data%xval(1:npts,i), kind=dp), real(xy_data%yval(1:npts,i), kind=dp), npts)
+            
+            call penwid(real(xy_data(i)%pen_width, kind=dp))    !set pen / curve width (especially for pdf output) 
+            
+            call setrgb(xy_data(i)%rgb_color(1)/255.0_dp, &
+                      & xy_data(i)%rgb_color(2)/255.0_dp, &
+                      & xy_data(i)%rgb_color(3)/255.0_dp)       !set color by RGB value
+            
+            call leglin(cbuff, xy_data(i)%legtext, i)
+            call curve(real(xy_data(i)%xval(1:npts), kind=dp), real(xy_data(i)%yval(1:npts), kind=dp), npts)
         enddo
     
         !plot legend and finalize plot:
         if (legend_position /= 0) then
-            call height(26)                             !set font size (height) for legend
+            call height(26)                                 !set font size (height) for legend
             call color('black')
             call penwid(1.0_dp)  
             call legtit('')                             
-            call frame(1)                               !set legend frame thickness
-            call linesp(2.0_dp)                         !modify line spacing of legend entries
-            call legend(cbuff, legend_position)         !plot legend; e.g. 3 = position at upper right corner of page
+            call frame(1)                                   !set legend frame thickness
+            call linesp(2.0_dp)                             !modify line spacing of legend entries
+            call legend(cbuff, legend_position)             !plot legend; e.g. 3 = position at upper right corner of page; 
+                                                            !4 = upper left of page; 8 = upper left of axis system        
         endif
         call endgrf
         call disfin
@@ -390,7 +396,7 @@ public :: add_plot_xydata, dislin_plot
     
     deallocate(cbuff)
     !deallocate xy_data content so the next plot is not including current data:
-    deallocate( xy_data, stat=istat )    
+    deallocate(xy_data, stat=istat)    
 
     end subroutine dislin_plot
     !------------------------------------------------------------ 
