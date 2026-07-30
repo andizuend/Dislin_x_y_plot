@@ -94,7 +94,7 @@ contains
                                                                 !3 = +, 4 = X, 16 = filled square, 21 = filled circle, etc.)
     
     !local variables:
-    integer :: istat, k, ndset, nl, np, np_old
+    integer :: i, istat, k, ndset, nl, np, np_old
     logical :: is_allocated
     type(xydata_type),dimension(:),allocatable :: temp_data
     !...................................
@@ -119,7 +119,9 @@ contains
     endif
     
     allocate(temp_data(ndset), stat=istat)
-    allocate(temp_data(ndset)%xval(np), temp_data(ndset)%yval(np), stat=istat)
+    do i = 1,ndset
+        allocate(temp_data(i)%xval(np), temp_data(i)%yval(np), stat=istat)
+    enddo
     
     if (is_allocated) then  
         !copy the data for the first ndset-1 entries to the temporary array
