@@ -38,15 +38,20 @@ implicit none
 
 !type declarations and shared module data:
 type, private :: xydata_type                                   
-    integer,allocatable :: npoints              !stores number of data points of a data set to be plotted
-    real(wp),dimension(:),allocatable :: xval   !x coordinates of x--y data
-    real(wp),dimension(:),allocatable :: yval   !y coordinates of x--y data
-    character(len=75)   :: legtext              !legend entry text for a curve
-    real(wp)            :: pen_width            !pen width; typical values are between 1.0 and 9.0
-    integer,dimension(3):: rgb_color            !red, green, blue values (array of 3 values each in range [0, 255])
-    character(len=13)   :: line_style           !options: 'solid', 'dotted', 'dashed', 'dashed_medium'
-    character(len=7)    :: plot_symb            !plot curves and/or symbols; options: 'symbols', 'curve', 'both'
-    integer             :: symbol_id            !ID (number) of symbol type to be plotted (see Dislin manual)
+    integer,allocatable :: npoints                  !stores number of data points of a data set to be plotted
+    real(wp),dimension(:),allocatable :: xval       !x coordinates of x--y data
+    real(wp),dimension(:),allocatable :: yval       !y coordinates of x--y data
+    real(wp),dimension(:,:),allocatable :: xerr     !error bar lengths in x-axis direction, shape (1:2, 1:size(xval)), 
+                                                    !first dimension elements list: x-value minus err val, x-value plus err val
+    real(wp),dimension(:,:),allocatable :: yerr     !error bar lengths in y-axis direction, shape (1:2, 1:size(yval)), 
+                                                    !first dimension elements list: y-value minus err val, y-value plus err val
+    character(len=75)   :: legtext                  !legend entry text for a curve
+    real(wp)            :: pen_width                !pen width; typical values are between 1.0 and 9.0
+    integer,dimension(3):: rgb_color                !red, green, blue values (array of 3 values each in range [0, 255])
+    character(len=13)   :: line_style               !options: 'solid', 'dotted', 'dashed', 'dashed_medium'
+    character(len=7)    :: plot_symb                !plot curves and/or symbols; options: 'symbols', 'curve', 'both'
+    integer             :: symbol_id                !ID (number) of symbol type to be plotted (see Dislin manual)
+    integer             :: symbol_size              !size of the symbols in plot coordinates
 end type xydata_type                                  
 
 !
@@ -76,15 +81,20 @@ contains
     !*   Dept. Atmospheric and Oceanic Sciences, McGill University                          *
     !*                                                                                      *
     !*   -> created:        2021-06-29                                                      *
-    !*   -> latest changes: 2026-07-30                                                      *
+    !*   -> latest changes: 2026-11-05                                                      *
     !*                                                                                      *
     !****************************************************************************************
-    subroutine add_plot_xydata(xv, yv, ltext, pen_wid, rgb_col, lstyle, plot_symb, symb_id)
+    subroutine add_plot_xydata(xv, yv, xverr, yverr, ltext, pen_wid, rgb_col, lstyle, &
+        & plot_symb, symb_id, symb_size)
     
     implicit none
     !interface arguments:
     real(wp),dimension(:),intent(in) :: xv, yv                  !arrays of x and y values of data set to be added
-    character(len=*),intent(in) :: ltext                        !legend entry text for data set
+    real(wp),dimension(:,:),optional,intent(in) :: xverr        !x-value error bar length, first dimension elements list: 
+                                                                !1: x-value minus err val, 2: x-value plus err val
+    real(wp),dimension(:,:),optional,intent(in) :: yverr        !y-value error bar length, first dimension elements list: 
+                                                                !1: y-value minus err val, 2: y-value plus err val
+    character(len=*),optional,intent(in) :: ltext               !legend entry text for data set
     real(wp),optional,intent(in) :: pen_wid                     !pen width; typical values are between 1.0 and 9.0
     integer,dimension(3),optional,intent(in) :: rgb_col         !color array of the 3 r,g,b values, each in range [0, 255])
     character(len=*),optional,intent(in) :: lstyle              !line style; options: 'solid', 'dotted', 'dashed', 'dashed_medium'
@@ -92,6 +102,7 @@ contains
                                                                 !(options: 'symbols', 'curve', 'both')
     integer,optional,intent(in) :: symb_id                      !the symbol ID for dislin (15 = open circle, 5 = open diamond, 
                                                                 !3 = +, 4 = X, 16 = filled square, 21 = filled circle, etc.)
+    integer,optional,intent(in) :: symb_size                    !the size (height) of a symbol in plot coordinates (default: 35)
     
     !local variables:
     integer :: i, istat, k, ndset, nl, np, np_old
@@ -106,7 +117,8 @@ contains
         is_allocated = .true.
         ndset = size(xy_data, dim=1)
         np_old = size(xy_data(1)%xval, dim=1)
-        !update ndset and np (with room for data set to be added to xy_data):
+        !update ndset and np (with room for 
+        !data set to be added to xy_data):
         ndset = ndset + 1
         if (k > np_old) then
             nl = 112
@@ -120,34 +132,56 @@ contains
     
     allocate(temp_data(ndset), stat=istat)
     do i = 1,ndset
-        allocate(temp_data(i)%xval(np), temp_data(i)%yval(np), stat=istat)
+        allocate(temp_data(i)%xval(np), temp_data(i)%yval(np), temp_data(i)%xerr(1:2,1:np), temp_data(i)%yerr(1:2,1:np), stat=istat)
     enddo
     
     if (is_allocated) then  
-        !copy the data for the first ndset-1 entries to the temporary array
+        !copy the data for the first ndset-1 entries 
+        !to the temporary array
         temp_data(1:ndset-1) = xy_data(1:ndset-1)
     endif
     
-    !move the data into an enlarged xy_data using memory-friendly move_alloc:
-    call move_alloc(from=temp_data, to=xy_data)             !note: temp_data will be deallocated after this call
+    !move the data into an enlarged xy_data 
+    !using memory-friendly move_alloc:
+    call move_alloc(from = temp_data, to = xy_data)             !note: temp_data will be deallocated after this call
     
-    !finally add the new data set to xy_data, including accounting for optional arguments:
+    !finally add the new data set to xy_data, including 
+    !accounting for optional arguments:
     xy_data(ndset)%npoints = k
+    
     xy_data(ndset)%xval(1:k) = xv(1:k)
     xy_data(ndset)%yval(1:k) = yv(1:k)
+    
+    if (present(xverr)) then
+        xy_data(ndset)%xerr(1:2,1:k) = xverr(1:2,1:k)
+    else
+        xy_data(ndset)%xerr = 0.0_wp                            !default is error bar of zero length (then not shown)   
+    endif
+    
+    if (present(yverr)) then
+        xy_data(ndset)%yerr(1:2,1:k) = yverr(1:2,1:k)
+    else
+        xy_data(ndset)%yerr = 0.0_wp    
+    endif
+    
     xy_data(ndset)%legtext = ''                                 !initialize whole string
-    nl = min(75, len_trim(ltext))                               !limit legend line entry to max. 75 characters
-    xy_data(ndset)%legtext(1:nl) = ltext(1:nl)
+    if (present(ltext)) then
+        nl = min(75, len_trim(ltext))                           !limit legend line entry to max. 75 characters
+        xy_data(ndset)%legtext(1:nl) = ltext(1:nl)
+    endif
+    
     if (present(pen_wid)) then
         xy_data(ndset)%pen_width = pen_wid
     else    
         xy_data(ndset)%pen_width = 1.0_wp                       !set a default value
     endif
+    
     if (present(rgb_col)) then
         xy_data(ndset)%rgb_color(1:3) = rgb_col(1:3)
     else
         xy_data(ndset)%rgb_color(1:3) = [0, 0, 0]               !default (black)
     endif
+    
     if (present(lstyle)) then
         xy_data(ndset)%line_style = ''
         nl = min(75, len_trim(lstyle))
@@ -155,6 +189,7 @@ contains
     else
         xy_data(ndset)%line_style = 'solid'
     endif
+    
     if (present(plot_symb)) then
         xy_data(ndset)%plot_symb = ''
         nl = min(75, len_trim(plot_symb))
@@ -162,11 +197,19 @@ contains
     else
         xy_data(ndset)%plot_symb = 'curve'
     endif
+    
     if (present(symb_id)) then
         xy_data(ndset)%symbol_id = symb_id
     else
         xy_data(ndset)%symbol_id = 15
     endif
+    
+    if (present(symb_size)) then
+        xy_data(ndset)%symbol_size = symb_size
+    else
+        xy_data(ndset)%symbol_size = 35
+    endif
+    
     
     end subroutine add_plot_xydata
     !-----------------------------------------------------------
@@ -186,7 +229,7 @@ contains
     !*   Dept. Atmospheric and Oceanic Sciences, McGill University                          *
     !*                                                                                      *
     !*   -> created:        2021-06-29                                                      *
-    !*   -> latest changes: 2026-07-30                                                      *
+    !*   -> latest changes: 2026-11-05                                                      *
     !*                                                                                      *
     !****************************************************************************************
     subroutine dislin_plot(xlabel, ylabel, yaxis_mod, xaxis_limits, yaxis_limits, &
@@ -221,12 +264,14 @@ contains
     integer :: i, istat, iplot, ndig, ndsets, npts, nxl, nyl, nzl, nplots
     real(dp) :: xaxis_min, xaxis_max, yaxis_min, yaxis_max, axis_range, temp, &
         & xa, xe, xor, xstep, ya, ye, yor, ystep
+    real(dp),dimension(:),allocatable :: e1ray, e2ray
     logical :: invert_xaxis, invert_yaxis
-    ! the external Dislin procedures (available via linked static library):
+    !the external Dislin procedures (available via linked static library):
     external :: metafl, scrmod, disini, pagfll, setclr, psfont, chaspc, height, hwfont, &
         & texmod, name, setscl, graf, incmrk, labdig, legini, leglin, legend, lncap, dot, &
         & dash, dashm, solid, penwid, color, curve, setrgb, endgrf, disfin, setfil, filmod, &
-        & legtit, frame, linesp, getlen, axslen, psmode, marker, nochek, gaxpar   
+        & legtit, frame, linesp, getlen, axslen, psmode, marker, nochek, gaxpar, errbar, &
+        & bartyp, errmod, hsymbl   
     !...............................................
     
     !The object xy_data contains stored data for a curve or for several curves, 
@@ -286,6 +331,7 @@ contains
             xaxis_min = minval( [( minval(xy_data(i)%xval(1:xy_data(i)%npoints)), i=1,ndsets )] )
             xaxis_max = maxval( [( maxval(xy_data(i)%xval(1:xy_data(i)%npoints)), i=1,ndsets )] )
         endif
+        
         axis_range = abs(xaxis_max - xaxis_min)
         if (invert_xaxis) then
             temp = xaxis_min
@@ -306,6 +352,7 @@ contains
             yaxis_min = minval( [( minval( xy_data(i)%yval(1:xy_data(i)%npoints)), i=1,ndsets )] ) 
             yaxis_max = maxval( [( maxval( xy_data(i)%yval(1:xy_data(i)%npoints)), i=1,ndsets )] ) 
         endif
+        
         axis_range = abs(yaxis_max - yaxis_min)
         if (invert_yaxis) then
             temp = yaxis_min
@@ -315,15 +362,17 @@ contains
         yaxis_min = yaxis_min -(0.015_dp/yaxis_mod)*axis_range
         yaxis_max = yaxis_max +(0.015_dp/yaxis_mod)*axis_range
     
-        !initialize graph axis system (using automatic scaling):
-        ndig = -2                                           !set as -2 so dislin determines number of displayed digits automatically
-        call nochek()                                       !suppress warning about points outside of the plotting area
+        !initialize graph axis system 
+        !(using automatic scaling):
+        ndig = -2                                               !set as -2 so dislin determines displayed digits automatically
+        call nochek()                                           !suppress warning about points outside of the plotting area
         if (invert_xaxis) then
             call gaxpar(xaxis_max, xaxis_min, 'noextend', 'x', xa, xe, xor, xstep, ndig)
         else
             call gaxpar(xaxis_min, xaxis_max, 'noextend', 'x', xa, xe, xor, xstep, ndig)
         endif
         call labdig(ndig, 'x')
+        
         ndig = -2
         if (invert_yaxis) then
             call gaxpar(yaxis_max, yaxis_min, 'noextend', 'y', ya, ye, yor, ystep, ndig)
@@ -331,10 +380,13 @@ contains
             call gaxpar(yaxis_min, yaxis_max, 'noextend', 'y', ya, ye, yor, ystep, ndig)
         endif
         call labdig(ndig, 'y')
-        call graf(xa, xe, xor, xstep, ya, ye, yor, ystep)  
-        call legini(cbuff, min(ndsets, 30), 75)             !initialize legend
+        
+        call graf(xa, xe, xor, xstep, ya, ye, yor, ystep)
+        
+        call legini(cbuff, min(ndsets, 30), 75)                 !initialize legend
     
-        !plot x--y data for all curves/symbols with the curve-specific properties:
+        !plot x--y data for all curves/symbols 
+        !with the curve-specific properties:
         do i = 1,ndsets
             npts = xy_data(i)%npoints
             
@@ -344,10 +396,12 @@ contains
                 call incmrk(0)
             case('symbols')
                 call incmrk(-1)    
-                call marker(xy_data(i)%symbol_id) 
+                call marker(xy_data(i)%symbol_id)
+                call hsymbl(xy_data(i)%symbol_size) 
             case('both')
                 call incmrk(1)        
-                call marker(xy_data(i)%symbol_id)                       
+                call marker(xy_data(i)%symbol_id)
+                call hsymbl(xy_data(i)%symbol_size)                       
             case default
                 call incmrk(0)              
             end select
@@ -358,7 +412,7 @@ contains
                 call lncap('long')
                 call solid()
             case('dotted')
-                call lncap('round')                         !rounded line caps
+                call lncap('round')                             !rounded line caps
                 call dot()                             
             case('dashed')  
                 call lncap('round')
@@ -366,7 +420,7 @@ contains
             case('dashed_medium')
                 call lncap('cut')
                 call dashm()                              
-            case default                                    !solid line style
+            case default                                        !solid line style
                 call lncap('long')
                 call solid()            
             end select
@@ -378,7 +432,45 @@ contains
                       & xy_data(i)%rgb_color(3)/255.0_dp)       !set color by RGB value
             
             call leglin(cbuff, xy_data(i)%legtext, i)
+            
             call curve(real(xy_data(i)%xval(1:npts), kind=dp), real(xy_data(i)%yval(1:npts), kind=dp), npts)
+            
+            !show x-value error bars if present as nonzero values:
+            if (any(xy_data(i)%xerr > 0.0_wp)) then
+                !set pen width for thickness of error bars: 
+                call penwid(real(max(0.1_wp*xy_data(i)%pen_width, 0.2_wp), kind=dp)) 
+                call solid()                                        !error bars as solid lines
+                call errmod('check', 'off')
+                call marker(-1)                                     !don't plot the symbol again (already done above)
+                !draw horizontal (x-axis) error bars:
+                e1ray = real(xy_data(i)%xerr(1,1:npts), kind=dp)    !error bar length for (x-value to x-value - e1ray) bars
+                e2ray = real(xy_data(i)%xerr(2,1:npts), kind=dp)    !error bar length for (x-value to x-value + e2ray) bars
+                if (any(e1ray(1:npts) > 0.0_dp) .or. any(e2ray(1:npts) > 0.0_dp)) then
+                    call bartyp('hori')
+                    call errbar(real(xy_data(i)%xval(1:npts), kind=dp), &
+                        & real(xy_data(i)%yval(1:npts), kind=dp), &
+                        & e1ray(1:npts), e2ray(1:npts), npts)
+                endif
+            endif
+            
+            !analogous for y-value error bars:
+            if (any(xy_data(i)%yerr > 0.0_wp)) then
+                !set pen width for thickness of error bars: 
+                call penwid(real(max(0.1_wp*xy_data(i)%pen_width, 0.2_wp), kind=dp)) 
+                call solid()
+                call errmod('check', 'off')
+                call marker(-1)
+                !draw vertical (y-axis) error bars:
+                e1ray = real(xy_data(i)%yerr(1,1:npts), kind=dp)    !error bar length for (y-value to y-value - e1ray) bars
+                e2ray = real(xy_data(i)%yerr(2,1:npts), kind=dp)    !error bar length for (y-value to y-value + e2ray) bars
+                if (any(e1ray(1:npts) > 0.0_dp) .or. any(e2ray(1:npts) > 0.0_dp)) then
+                    call bartyp('vert')
+                    call errbar(real(xy_data(i)%xval(1:npts), kind=dp), &
+                        & real(xy_data(i)%yval(1:npts), kind=dp), &
+                        & e1ray(1:npts), e2ray(1:npts), npts)
+                endif
+            endif
+            
         enddo
     
         !plot legend and finalize plot:

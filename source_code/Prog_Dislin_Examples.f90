@@ -53,7 +53,6 @@ ydat2 = 1.0_wp + xdat*(1.0_wp - xdat)**4
 !end block
 
 
-
 !----------------------------------------------------------------------------------------
 !** EXAMPLE 1: plot of two curves with a few set attributes **
 !
@@ -77,17 +76,18 @@ block
     !note that only xv=..., yv=..., and ltext=... need to be present; other attributes are 
     !optional and, if absent, a default value will be used.
     call add_plot_xydata(xv=xdat, yv=ydat1, ltext='ydat1 curve data', pen_wid=8.0_wp, &
-                    & rgb_col=rgb_blue, lstyle='solid', plot_symb='curve', symb_id=15)
+        & rgb_col=rgb_blue, lstyle='solid', plot_symb='curve', symb_id=15)
 
     call add_plot_xydata(xv=xdat, yv=ydat2, ltext='ydat2 data, $y2_{\rm dat}$', pen_wid=8.0_wp, &
-                    & rgb_col=rgb_green, lstyle='dashed_medium', plot_symb='curve')
+        & rgb_col=rgb_green, lstyle='dashed_medium', plot_symb='curve')
 
     !set overall plot properties and generate Dislin plot:
     xlabel = 'mole fraction of component 1, $x_1$'
     ylabel = '$y_{\rm dat}$'
     call dislin_plot(xlabel, ylabel, yaxis_mod=0.6_wp, legend_position=7, metafile='pdf', &
-                    & out_file_name='dislin_x_y_plot_example1')    
-end block
+        & out_file_name='dislin_x_y_plot_example1')
+    
+end block !example 1
 !----------------------------------------------------------------------------------------
 
 
@@ -148,12 +148,12 @@ block
         rgb_set = int(col_palette(1:3, 1+(nc-1)*ncolors/ncurves))  !pick a color with reasonable spacing over whole palette
         write(legend_text,'("data set, ",I0.2)') nc
         call add_plot_xydata(xv=xvals(:,nc), yv=yvals(:,nc), ltext=legend_text, pen_wid=3.0_wp, &
-                            & rgb_col=rgb_set, lstyle='solid', plot_symb='symbols', symb_id=21)
+            & rgb_col=rgb_set, lstyle='solid', plot_symb='symbols', symb_id=21)
     enddo
     
     !add another curve (here the 1:1 line):
     call add_plot_xydata(xv=[0.0_wp, 10.0_wp], yv=[0.0_wp, 10.0_wp], ltext='$1:1$ line', &
-                        & pen_wid=6.0_wp, lstyle='dotted', plot_symb='curve')   !will use default color
+        & pen_wid=6.0_wp, lstyle='dotted', plot_symb='curve')   !will use default color
 
     !set overall plot properties and generate Dislin plot:
     xlabel = '$x$ value'
@@ -162,12 +162,171 @@ block
     xax_lim = [0.0_wp, 5.0_wp]
     yax_lim = [0.0_wp, 5.0_wp]
     call dislin_plot(xlabel, ylabel, yaxis_mod=1.0_wp, xaxis_limits=xax_lim, yaxis_limits=yax_lim, &
-                & legend_position=3, metafile='cons, pdf', out_file_name='dislin_x_y_plot_example2')
+        & legend_position=3, metafile='cons, pdf', out_file_name='dislin_x_y_plot_example2')
     
     !note: setting metafile = 'xwin, pdf' or = 'cons, pdf' will produce two versions of the same plot, 
     !      one displayed on the screen and one saved as a pdf file.
             
-end block
+end block !example 2
+!----------------------------------------------------------------------------------------
+
+
+
+!----------------------------------------------------------------------------------------
+!** EXAMPLE 3: plot of several curves and symbols, some including error bars; data read from files, 
+!**            colors from a loaded palette and x- and y-axis limits of plot axis system specified. **
+!
+block  
+    use Mod_Dislin_plots, only : add_plot_xydata, dislin_plot
+    
+    character(len=75) :: xlabel, ylabel
+    character(len=300) :: filename, filepath
+    integer :: i, istat, k, ncolors, u1
+    integer,dimension(3) :: rgb_set
+    logical :: fexists
+    real(wp) :: a, b, c, d
+    real(wp),dimension(2) :: xax_lim, yax_lim
+    real(wp),dimension(:,:),allocatable :: col_palette, xv_err, yv_err
+    real(wp),dimension(:),allocatable :: xv1, yv1, xv2, yv2, xv3, yv3
+    real(wp),dimension(:),allocatable :: xerr1, yerr1, xerr2, yerr2
+    !....................................
+    
+    !-- [A] -- read data from a provided input files
+    filename = 'example3_inp_data1.txt'
+    filepath = './inp_files/'
+    inquire(file = trim(filepath)//trim(filename), exist = fexists)
+    if (.not. fexists) then
+        filepath = '../inp_files/'   
+        inquire(file = trim(filepath)//trim(filename), exist = fexists) 
+        if (.not. fexists) then
+            write(*,*) "ERROR in example 3: file/folder not found!"
+            read(*,*)
+        endif
+    endif 
+    
+    !read input file 1:
+    open(newunit=u1, file=trim(filepath)//trim(filename), iostat=istat, action='read', status='old')
+    read(u1, '(A,/)')  !read header line
+    i = 0
+    do
+        read(u1,*,iostat=istat) a, b, c, d
+        if (istat /= 0) exit                        !leave when reaching end of file or other issue
+        i = i+1
+        xv1   = [xv1(1:i-1), a]  
+        yv1   = [yv1(1:i-1), b]
+        xerr1 = [xerr1(1:i-1), c] 
+        yerr1 = [yerr1(1:i-1), d]
+    enddo   
+    close(u1)
+    
+    !read input file 2:
+    filename = 'example3_inp_data2.txt'
+    open(newunit=u1, file=trim(filepath)//trim(filename), iostat=istat, action='read', status='old')
+    read(u1, '(A,/)')  !read header line
+    i = 0
+    do
+        read(u1,*,iostat=istat) a, b, c, d
+        if (istat /= 0) exit
+        i = i+1
+        xv2   = [xv2(1:i-1), a]  
+        yv2   = [yv2(1:i-1), b]
+        xerr2 = [xerr2(1:i-1), c] 
+        yerr2 = [yerr2(1:i-1), d]
+    enddo   
+    close(u1)
+    
+    !read input file 3 (different number of columns):
+    filename = 'example3_inp_data3.txt'
+    open(newunit=u1, file=trim(filepath)//trim(filename), iostat=istat, action='read', status='old')
+    read(u1, '(A,/)')  !read header line
+    i = 0
+    do
+        read(u1,*,iostat=istat) a, b
+        if (istat /= 0) exit
+        i = i+1
+        xv3 = [xv3(1:i-1), a]  
+        yv3 = [yv3(1:i-1), b]
+    enddo   
+    close(u1)
+    !-- [A] --
+    
+    
+    !-- [B] -- load a RGB color table for this plot
+    ncolors = 22
+    allocate(col_palette(3,ncolors))
+    !currently included options for color palettes (this can be customized easily):
+    !./color_palettes/RGBColTabBlackPurpleRedYellow.dat             !256 colors
+    !./color_palettes/RGBColTabViridisPurpleBlueGreenYellow.dat     !256 colors
+    !./color_palettes/RGBTwentyDistinctCol.dat                      !ncolors = 22 (20 colors plus 2 for white and black)
+    filename = 'RGBTwentyDistinctCol.dat'
+    filepath = './color_palettes/'//trim(filename)
+    inquire(file=trim(filepath), exist=fexists)
+    if (.not. fexists) then
+        filepath = './source_code/color_palettes/'//trim(filename)    
+    endif    
+    
+    open(newunit=u1, file=trim(filepath), iostat=istat, action='read', status='old')
+    i = 0
+    do
+        i = i+1
+        read(u1,*,iostat=istat) col_palette(1:3,i)
+        if (istat /= 0 .or. i+1 > ncolors) exit
+    enddo
+    close(u1)
+    
+    if (.not. any(col_palette > 1.1_wp)) then
+        !scale to 0 to 255 range:
+        col_palette = col_palette*255.0_wp
+    endif
+    !-- [end B] --
+
+    
+    !-- [C] -- now add data sets for x--y curves/symbols, each using a different color, then plot
+    
+    ![C1] - first set of experimental data including (symmetric) error bars
+    !note: in this example the error bar length in both positive and negative direction from a point are kept the same, 
+    !but the plotting module allows one to specify distinct values for each direction.
+    !map the error bar data in such a way that the read data represents x-value + xerr and x-value - xerr value, 
+    !held by the 2-dimensional xv_err array and analogous for y-value errors.
+    k = size(xerr1)
+    allocate(xv_err(2,k), yv_err(2,k))
+    xv_err(1,:) = xerr1
+    xv_err(2,:) = xerr1
+    yv_err(1,:) = yerr1
+    yv_err(2,:) = yerr1
+    
+    rgb_set = int(col_palette(1:3,6))
+    call add_plot_xydata(xv=xv1(:), yv=yv1(:), xverr=xv_err, yverr=yv_err, ltext="experimental data 1", &
+        & pen_wid=3.0_wp, rgb_col=rgb_set, lstyle='solid', plot_symb='symbols', symb_id=5, symb_size=32)
+    
+    ![C2] - second set of experimental data (showing only y-value error bars):
+    if (allocated(yv_err)) deallocate(yv_err)
+    k = size(yerr2)
+    allocate(yv_err(2,k))
+    yv_err(1,:) = yerr2
+    yv_err(2,:) = yerr2
+    rgb_set = int(col_palette(1:3,4))
+    call add_plot_xydata(xv=xv2(:), yv=yv2(:), yverr=yv_err, ltext="experimental data 2", &
+        & pen_wid=3.0_wp, rgb_col=rgb_set, lstyle='solid', plot_symb='symbols', symb_id=15, symb_size=28)
+    
+    ![C3] - model prediction curve (no error bars/envelope):
+    rgb_set = int(col_palette(1:3,19))
+    call add_plot_xydata(xv=xv3(:), yv=yv3(:), ltext="model prediction", pen_wid=6.0_wp, &
+                        & rgb_col=rgb_set, lstyle='solid', plot_symb='curve')
+
+    ![C4] - set overall plot properties and generate plot:
+    xlabel = 'mass fraction of water / (-)'
+    ylabel = 'water activity, $a_w$ / (-)'
+    xax_lim = [0.0_wp, 1.0_wp]
+    yax_lim = [0.0_wp, 1.03_wp]
+    call dislin_plot(xlabel, ylabel, yaxis_mod=0.75_wp, xaxis_limits=xax_lim, yaxis_limits=yax_lim, &
+                & legend_position=8, metafile='cons, pdf', out_file_name='dislin_x_y_plot_example3')
+    !-- [C] --
+    
+    !note: setting metafile = 'xwin, pdf' or = 'cons, pdf' will produce two versions of the same plot, 
+    !      one displayed on the screen and one saved as a pdf file.
+            
+end block !example 3
 !----------------------------------------------------------------------------------------
 
 
