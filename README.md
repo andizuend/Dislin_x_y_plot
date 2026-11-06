@@ -31,13 +31,15 @@ The module `Mod_Dislin_plots` contains two subroutines:
 
 A number of data set (curve) properties can be controlled via optional arguments in the call of `add_plot_xydata`, these include:
 
- - arrays of x and y values of data set to be added
+ - arrays of x and y values of a data set to be added
+ - error bars for x and y values for a data set
  - legend entry text for data set
  - pen width in plot pixels (to set curve thickness)
- - color array of the 3 red, green, blue (RGB) values, each in range [0, 255]
+ - color array of the 3 red, green, blue (RGB) values, each in range [0, 255] (can be drawn from provided color palettes)
  - line style; options: 'solid', 'dotted', 'dashed', 'dashed_medium'
  - plot curves with or without symbols, or symbols only (options: 'symbols', 'curve', 'both')
  - the symbol ID for dislin (15 = open circle, 5 = open diamond, 3 = +, 4 = X, 16 = filled square, 21 = filled circle, etc.)
+ - symbol size
  
  Other features from the Dislin graphics library could be added based on your needs.
  
