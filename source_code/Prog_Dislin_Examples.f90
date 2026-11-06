@@ -11,7 +11,7 @@
 !*   Dept. Atmospheric and Oceanic Sciences, McGill University                          *
 !*                                                                                      *
 !*   -> created:        2021-06-29                                                      *
-!*   -> latest changes: 2026-07-30                                                      *
+!*   -> latest changes: 2026-11-05                                                      *
 !*                                                                                      *
 !****************************************************************************************
 program Prog_Dislin_Examples
@@ -56,9 +56,8 @@ ydat2 = 1.0_wp + xdat*(1.0_wp - xdat)**4
 !----------------------------------------------------------------------------------------
 !** EXAMPLE 1: plot of two curves with a few set attributes **
 !
-!Generate a nicer x--y curve plot, showing
-!   several curves in the same plot (using Dislin but without use
-!   of quick plots). 
+!Generate a nicer x--y curve plot, showing several curves in 
+!   the same plot (using Dislin but without use of quick plots). 
 !   Here we use a set of module procedures from Mod_Dislin_plots 
 !   to make such plots with relatively few statements, while 
 !   being able to set various curve and plot properties.
@@ -311,8 +310,8 @@ block
     
     ![C3] - model prediction curve (no error bars/envelope):
     rgb_set = int(col_palette(1:3,19))
-    call add_plot_xydata(xv=xv3(:), yv=yv3(:), ltext="model prediction", pen_wid=6.0_wp, &
-                        & rgb_col=rgb_set, lstyle='solid', plot_symb='curve')
+    call add_plot_xydata(xv=xv3(:), yv=yv3(:), ltext="model prediction", pen_wid=4.0_wp, &
+        & rgb_col=rgb_set, lstyle='solid', plot_symb='curve')
 
     ![C4] - set overall plot properties and generate plot:
     xlabel = 'mass fraction of water / (-)'
@@ -328,7 +327,6 @@ block
             
 end block !example 3
 !----------------------------------------------------------------------------------------
-
 
 write(*,*) 'end of the program Dislin examples'
 read(*,*)

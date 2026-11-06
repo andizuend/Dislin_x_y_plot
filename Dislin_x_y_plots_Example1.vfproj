@@ -51,7 +51,20 @@
 		</Configuration>
 	</Configurations>
 	<Files>
+		<Filter Name="inp_files">
+			<File RelativePath=".\inp_files\example3_inp_data1.txt">
+			</File>
+			<File RelativePath=".\inp_files\example3_inp_data2.txt"/>
+			<File RelativePath=".\inp_files\example3_inp_data3.txt"/>
+		</Filter>
 		<Filter Name="Source Files" Filter="f90;for;f;fpp;ftn;def;odl;idl">
+			<Filter Name="color_palettes">
+				<File RelativePath=".\source_code\color_palettes\RGBColTabBlackPurpleRedYellow.dat"/>
+				<File RelativePath=".\source_code\color_palettes\RGBColTabBlackPurpleRedYellow.pdf"/>
+				<File RelativePath=".\source_code\color_palettes\RGBColTabViridisPurpleBlueGreenYellow.dat"/>
+				<File RelativePath=".\source_code\color_palettes\RGBColTabViridisPurpleBlueGreenYellow.pdf"/>
+				<File RelativePath=".\source_code\color_palettes\RGBTwentyDistinctCol.dat"/>
+			</Filter>
 			<File RelativePath=".\source_code\Mod_Dislin_plots.f90">
 			</File>
 			<File RelativePath=".\source_code\Mod_NumPrec.f90">

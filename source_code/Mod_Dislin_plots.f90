@@ -261,7 +261,7 @@ contains
     character(len=:),allocatable :: cbuff
     character(len=:),allocatable :: meta_file_kind
     integer,parameter :: dp = kind(1.0D0)               !use this real kind with the double precision version of Dislin.
-    integer :: i, istat, iplot, ndig, ndsets, npts, nxl, nyl, nzl, nplots
+    integer :: i, istat, iplot, namesize, ndig, ndsets, npts, nxl, nyl, nzl, nplots
     real(dp) :: xaxis_min, xaxis_max, yaxis_min, yaxis_max, axis_range, temp, &
         & xa, xe, xor, xstep, ya, ye, yor, ystep
     real(dp),dimension(:),allocatable :: e1ray, e2ray
@@ -271,7 +271,7 @@ contains
         & texmod, name, setscl, graf, incmrk, labdig, legini, leglin, legend, lncap, dot, &
         & dash, dashm, solid, penwid, color, curve, setrgb, endgrf, disfin, setfil, filmod, &
         & legtit, frame, linesp, getlen, axslen, psmode, marker, nochek, gaxpar, errbar, &
-        & bartyp, errmod, hsymbl   
+        & bartyp, errmod, hsymbl, hname, namdis  
     !...............................................
     
     !The object xy_data contains stored data for a curve or for several curves, 
@@ -316,6 +316,8 @@ contains
         call axslen(nxl, ceiling(nxl*yaxis_mod))            !modify the aspect ratio of the axis system via y-axis scaling
 
         !set axis system properties
+        namesize = 38
+        call hname(namesize)
         call name(trim(xlabel), 'X')                        !set x-axis label text
         call name(trim(ylabel), 'Y')
     
@@ -361,6 +363,9 @@ contains
         endif
         yaxis_min = yaxis_min -(0.015_dp/yaxis_mod)*axis_range
         yaxis_max = yaxis_max +(0.015_dp/yaxis_mod)*axis_range
+        
+        !axis label distance from axis/tick marks:
+        call namdis(namesize+8, 'xy')                           !dislin default is 30
     
         !initialize graph axis system 
         !(using automatic scaling):
